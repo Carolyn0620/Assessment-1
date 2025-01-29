@@ -74,27 +74,6 @@ def create_database_schema():
 
 create_database_schema()
 
-# Function to add sample cars
-def add_sample_cars():
-    sample_cars = [
-        ("Toyota", "Corolla", 2015, 60000, 1, 3, 30),
-        ("Honda", "Civic", 2018, 45000, 1, 2, 28),
-        ("Ford", "Focus", 2016, 75000, 1, 1, 25),
-        ("Chevrolet", "Malibu", 2017, 50000, 1, 2, 27),
-        ("Nissan", "Sentra", 2019, 30000, 1, 1, 26)
-    ]
-    
-    sql = "INSERT INTO cars (make, model, year, mileage, available_now, min_rent_period, max_rent_period) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    
-    for car in sample_cars:
-        mycursor.execute(sql, car)
-    
-    mydb.commit()
-    print("Sample cars added successfully.")
-
-# Add sample cars
-add_sample_cars()
-
 # Function to register a new user
 def register_user(username, password, role):
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
@@ -215,6 +194,7 @@ def admin_menu():
         
         if option == '1':
             while True:
+                print("\n** Add Car Data Entry **\n")
                 brand = get_valid_input("Enter car brand: ", is_string)
                 model = get_valid_input("Enter car model: ", is_string)
                 plate_number = input("Enter car plate number: ")
@@ -228,6 +208,7 @@ def admin_menu():
                 min_rent_period = int(get_valid_input("Enter minimum rent period (day): ", is_positive_int))
                 max_rent_period = int(get_valid_input("Enter maximum rent period (day): ", is_positive_int))
                 
+                # Confirm data entry
                 print("\nThese are the details of the car.\n")
                 print(f"Brand: {brand}")
                 print(f"Model: {model}")
@@ -246,42 +227,58 @@ def admin_menu():
                 if confirm.lower() == 'y':
                     sql = """
                     INSERT INTO cars (
-                        brand, model, plate_number, color, seats, engine_capacity,
-                        rate_per_hour, rate_per_day, year, mileage, available_now,
+                        brand, model, plate_number, color, seats, rate_per_hour, 
+                        rate_per_day, year, mileage, available_now,
                         min_rent_period, max_rent_period
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """
                     val = (
-                        brand, model, plate_number, color, seats,rate_per_hour, 
+                        brand, model, plate_number, color, seats, rate_per_hour, 
                         rate_per_day, year, mileage, available_now,
                         min_rent_period, max_rent_period
                     )
                     mycursor.execute(sql, val)
                     mydb.commit()
-                    print("Car added successfully.")
+                    print("Car added successfully.")    
                     break
+            
                 else:
-                    print("Car record not saved. Re-enter the details.")
-
-        elif option == '7':
-            break
-        else:
-            print("Invalid option. Please try again.")
-
-        if option == '2':
-            car_id = int(input("Enter car ID to modify: "))
-            make = input("Enter new make: ")
-            model = input("Enter new model: ")
-            year = int(input("Enter new year: "))
-            mileage = int(input("Enter new mileage: "))
-            available_now = int(input("Is the car available now? (1 = Yes, 0 = No): "))
-            min_rent_period = int(input("Enter new minimum rent period (day): "))
-            max_rent_period = int(input("Enter new maximum rent period (day): "))
-            sql = "UPDATE cars SET make=%s, model=%s, year=%s, mileage=%s, available_now=%s, min_rent_period=%s, max_rent_period=%s WHERE id=%s"
-            val = (make, model, year, mileage, available_now, min_rent_period, max_rent_period, car_id)
+                    reenter = input("Car record not saved. Re-enter the details? (Y/N): ")
+                    if reenter.lower() == 'y':
+                        continue  # This will loop back to re-enter car details
+                    else:
+                        break
+            
+        elif option == '2':
+            car_id = int(input("\nEnter the car ID to modify: "))
+            print("\n** Modify Car Details **\n")
+            brand = get_valid_input("Enter new car brand: ", is_string)
+            model = get_valid_input("Enter new car model: ", is_string)
+            plate_number = input("Enter new car plate number: ")
+            color = get_valid_input("Enter new car colour: ", is_string)
+            seats = int(get_valid_input("Enter new number of seats: ", is_positive_int))
+            rate_per_hour = float(get_valid_input("Enter new rate per hour: ", is_float))
+            rate_per_day = float(get_valid_input("Enter new rate per day: ", is_float))
+            year = int(get_valid_input("Enter new car year: ", is_positive_int))
+            mileage = int(get_valid_input("Enter new car mileage: ", is_positive_int))
+            available_now = int(get_valid_input("Is the car available now? (1 = Yes, 0 = No): ", lambda x: x in ['0', '1']))
+            min_rent_period = int(get_valid_input("Enter new minimum rent period (day): ", is_positive_int))
+            max_rent_period = int(get_valid_input("Enter new maximum rent period (day): ", is_positive_int))
+            
+            sql = """
+            UPDATE cars SET brand=%s, model=%s, plate_number=%s, color=%s, seats=%s, rate_per_hour=%s, 
+            rate_per_day=%s, year=%s, mileage=%s, available_now=%s, min_rent_period=%s, 
+            max_rent_period=%s WHERE id=%s
+            """
+            val = (
+                brand, model, plate_number, color, seats, rate_per_hour, 
+                rate_per_day, year, mileage, available_now,
+                min_rent_period, max_rent_period, car_id
+            )
             mycursor.execute(sql, val)
             mydb.commit()
             print("Car details updated successfully.")
+
         elif option == '3':
             display_cars()
         elif option == '4':
@@ -304,24 +301,107 @@ def admin_menu():
 
 
 # Customer menu function
+def customer_login():
+    username = input("Enter username: ")
+    password = input("Enter password: ")
+    
+    # Check login credentials (implement your own logic)
+    sql = "SELECT * FROM customers WHERE username = %s AND password = %s"
+    mycursor.execute(sql, (username, password))
+    result = mycursor.fetchone()
+    
+    if result:
+        print("Login successful.")
+        return result[0]  # Assuming the first column is the customer ID
+    else:
+        print("Invalid login credentials. Please try again.")
+        return None
+
+def modify_personal_details(customer_id):
+    print("Modify Personal Details")
+    
+    new_username = input("Enter new username: ")
+    new_password = input("Enter new password: ")
+    new_email = input("Enter new email: ")
+    
+    sql = "UPDATE customers SET username = %s, password = %s, email = %s WHERE id = %s"
+    mycursor.execute(sql, (new_username, new_password, new_email, customer_id))
+    mydb.commit()
+    
+    print("Personal details updated successfully.")
+
+def view_rental_history(customer_id):
+    sql = "SELECT * FROM rentals WHERE customer_id = %s"
+    mycursor.execute(sql, (customer_id,))
+    rentals = mycursor.fetchall()
+    for rental in rentals:
+        print(rental)
+
+def view_details_of_booked_car(customer_id):
+    sql = """
+    SELECT cars.*
+    FROM rentals
+    JOIN cars ON rentals.car_id = cars.id
+    WHERE rentals.customer_id = %s AND rentals.rental_end >= CURDATE()
+    """
+    mycursor.execute(sql, (customer_id,))
+    cars = mycursor.fetchall()
+    for car in cars:
+        print(car)
+
+def make_car_booking(user_id):
+    car_id = int(input("Enter car ID to book: "))
+    rental_start = input("Enter rental start date (YYYY-MM-DD): ")
+    rental_end = input("Enter rental end date (YYYY-MM-DD): ")
+    total_fee = calculate_rental_fee(car_id, rental_start, rental_end)
+    book_car(user_id, car_id, rental_start, rental_end, total_fee)
+
+def make_payment(user_id):
+    # Implement make payment functionality
+    pass
+
+# Customer menu function
 def customer_menu(user_id):
     while True:
         print("\n** Customer Menu **\n")
-        print("1 = View Available Cars")
-        print("2 = Book Car")
-        print("3 = Logout\n")
+        print("1 = Customer login")
+        print("2 = Modify personal details")
+        print("3 = View rental history")
+        print("4 = View details of booked car")
+        print("5 = Make a car booking")
+        print("6 = Make payment")
+        print("7 = Logout\n")
         
         option = input("Select an option: ")
         
         if option == '1':
-            display_cars()
+            user_id = customer_login()
         elif option == '2':
-            car_id = int(input("Enter car ID to book: "))
-            rental_start = input("Enter rental start date (YYYY-MM-DD): ")
-            rental_end = input("Enter rental end date (YYYY-MM-DD): ")
-            total_fee = calculate_rental_fee(car_id, rental_start, rental_end)
-            book_car(user_id, car_id, rental_start, rental_end, total_fee)
+            if user_id:
+                modify_personal_details(user_id)
+            else:
+                print("You need to log in first.")
         elif option == '3':
+            if user_id:
+                view_rental_history(user_id)
+            else:
+                print("You need to log in first.")
+        elif option == '4':
+            if user_id:
+                view_details_of_booked_car(user_id)
+            else:
+                print("You need to log in first.")
+        elif option == '5':
+            if user_id:
+                make_car_booking(user_id)
+            else:
+                print("You need to log in first.")
+        elif option == '6':
+            if user_id:
+                make_payment(user_id)
+            else:
+                print("You need to log in first.")
+        elif option == '7':
             break
         else:
             print("Invalid option, please try again.")
@@ -352,7 +432,7 @@ def display_cars():
             break
         else:
             print("Invalid option, please try again.")
-            
+
 def display_cars_rented_out():
     sql = "SELECT * FROM rentals WHERE rental_end >= CURDATE()"
     mycursor.execute(sql)
@@ -390,6 +470,7 @@ def display_customer_records():
     users = mycursor.fetchall()
     for user in users:
         print(user)
+
                   
 # Function to manage rental bookings
 def manage_rentals():
@@ -425,7 +506,17 @@ def manage_rentals():
         else:
             print("Invalid option, please try again.")
 
-# Main menu function
+# Main Manu
+def register_admin_user():
+    username = input("Enter new admin username: ")
+    password = input("Enter new admin password: ")
+    
+    sql = "INSERT INTO users (username, password, role) VALUES (%s, %s, %s)"
+    mycursor.execute(sql, (username, password, 'admin'))
+    mydb.commit()
+    
+    print(f"Admin user {username} registered successfully.")
+
 def main_menu():
     while True:
         print("\n** MyRide Car Rental **\n")
@@ -437,29 +528,43 @@ def main_menu():
         option = input("Select an option: ")
         
         if option == '1':
-            username = input("Enter username: ")
-            password = input("Enter password: ")
-            user = login_user(username, password)
-            if user and user[3] == 'admin':
-                print(f"Welcome Admin {user[1]}!")
-                admin_menu()
+            print("1 = Login")
+            print("2 = New Register\n")
+            
+            admin_option = input("Select an option: ")
+            
+            if admin_option == '1':
+                username = input("Enter username: ")
+                password = input("Enter password: ")
+                user = login_user(username, password)
+                if user and user[3] == 'admin':
+                    print(f"Welcome Admin {user[1]}!")
+                    admin_menu()
+                else:
+                    print("Invalid credentials or not an admin. Please try again.")
+            elif admin_option == '2':
+                register_admin_user()
             else:
-                print("Invalid credentials or not an admin. Please try again.")
+                print("Invalid option. Please try again.")
+        
         elif option == '2' or option == '3':
             username = input("Enter username: ")
             password = input("Enter password: ")
             user = login_user(username, password)
             if user:
                 print(f"Welcome {user[1]}!")
-                # Call customer_menu() here if you have a customer menu function
+                customer_menu(user[0])  # Assuming the customer_menu function requires the user ID
             else:
                 print("Invalid credentials. Please try again.")
+        
         elif option == '4':
             print("Exiting...")
             close_connection()
             break
+        
         else:
             print("Invalid option, please try again.")
+
 
 # Run the application
 main_menu()
