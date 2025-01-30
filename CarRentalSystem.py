@@ -30,7 +30,7 @@ def create_database_schema():
     mycursor.execute("""
     CREATE TABLE IF NOT EXISTS cars (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        brand VARCHAR(255) NOT NULL,
+        make VARCHAR(255) NOT NULL,
         model VARCHAR(255) NOT NULL,
         plate_number VARCHAR(255) NOT NULL,
         color VARCHAR(255) NOT NULL,
@@ -195,7 +195,7 @@ def admin_menu():
         if option == '1':
             while True:
                 print("\n** Add Car Data Entry **\n")
-                brand = get_valid_input("Enter car brand: ", is_string)
+                make = get_valid_input("Enter car make: ", is_string)
                 model = get_valid_input("Enter car model: ", is_string)
                 plate_number = input("Enter car plate number: ")
                 color = get_valid_input("Enter car colour: ", is_string)
@@ -210,7 +210,7 @@ def admin_menu():
                 
                 # Confirm data entry
                 print("\nThese are the details of the car.\n")
-                print(f"Brand: {brand}")
+                print(f"Make: {make}")
                 print(f"Model: {model}")
                 print(f"Plate Number: {plate_number}")
                 print(f"Car Colour: {color}")
@@ -227,13 +227,13 @@ def admin_menu():
                 if confirm.lower() == 'y':
                     sql = """
                     INSERT INTO cars (
-                        brand, model, plate_number, color, seats, rate_per_hour, 
+                        make, model, plate_number, color, seats, rate_per_hour, 
                         rate_per_day, year, mileage, available_now,
                         min_rent_period, max_rent_period
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """
                     val = (
-                        brand, model, plate_number, color, seats, rate_per_hour, 
+                        make, model, plate_number, color, seats, rate_per_hour, 
                         rate_per_day, year, mileage, available_now,
                         min_rent_period, max_rent_period
                     )
@@ -252,7 +252,7 @@ def admin_menu():
         elif option == '2':
             car_id = int(input("\nEnter the car ID to modify: "))
             print("\n** Modify Car Details **\n")
-            brand = get_valid_input("Enter new car brand: ", is_string)
+            make = get_valid_input("Enter new car make: ", is_string)
             model = get_valid_input("Enter new car model: ", is_string)
             plate_number = input("Enter new car plate number: ")
             color = get_valid_input("Enter new car colour: ", is_string)
@@ -266,12 +266,12 @@ def admin_menu():
             max_rent_period = int(get_valid_input("Enter new maximum rent period (day): ", is_positive_int))
             
             sql = """
-            UPDATE cars SET brand=%s, model=%s, plate_number=%s, color=%s, seats=%s, rate_per_hour=%s, 
+            UPDATE cars SET make=%s, model=%s, plate_number=%s, color=%s, seats=%s, rate_per_hour=%s, 
             rate_per_day=%s, year=%s, mileage=%s, available_now=%s, min_rent_period=%s, 
             max_rent_period=%s WHERE id=%s
             """
             val = (
-                brand, model, plate_number, color, seats, rate_per_hour, 
+                make, model, plate_number, color, seats, rate_per_hour, 
                 rate_per_day, year, mileage, available_now,
                 min_rent_period, max_rent_period, car_id
             )
@@ -506,7 +506,7 @@ def manage_rentals():
         else:
             print("Invalid option, please try again.")
 
-# Main Manu
+# Function to register admin user
 def register_admin_user():
     username = input("Enter new admin username: ")
     password = input("Enter new admin password: ")
@@ -517,6 +517,7 @@ def register_admin_user():
     
     print(f"Admin user {username} registered successfully.")
 
+# Main Manu
 def main_menu():
     while True:
         print("\n** MyRide Car Rental **\n")
@@ -559,7 +560,7 @@ def main_menu():
         
         elif option == '4':
             print("Exiting...")
-            close_connection()
+            #close_connection()
             break
         
         else:
