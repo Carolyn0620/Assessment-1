@@ -39,3 +39,12 @@ def calculate_rental_fee(car_id, rental_start, rental_end):
     
     print(f"Total rental fee for {rental_days} days is: {total_fee}")
     return total_fee
+
+# Function to view rental history
+def view_rental_history():
+    username = input("Enter your username: ")
+    sql = "SELECT * FROM rentals WHERE customer_username = %s"
+    mycursor.execute(sql, (username,))
+    rentals = mycursor.fetchall()
+    for rental in rentals:
+        print(rental)

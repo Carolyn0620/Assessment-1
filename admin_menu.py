@@ -1,6 +1,6 @@
 from database import mycursor, mydb
 from car_management import display_cars, delete_car
-from rental_management import update_payment, return_rented_car, book_car
+from rental_management import update_payment, return_rented_car
 from utils import get_valid_input, is_positive_int, is_string, is_float
 
 def admin_menu():

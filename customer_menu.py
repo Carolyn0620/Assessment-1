@@ -1,71 +1,9 @@
 from database import mycursor, mydb
-from rental_management import book_car, calculate_rental_fee
+from user_management import modify_personal_details
+from rental_management import view_rental_history
+from car_management import view_details_of_booked_car, make_car_booking, make_payment
+from utils import get_valid_input, validate_current_username, validate_new_username, validate_password, validate_tel_no, validate_address, is_string
 import hashlib
-
-
-def modify_personal_details():
-    print("\n** Modify Personal Details **\n")
-
-    username = input("Enter your current username: ")
-    new_username = input("Enter new username: ")
-    new_password = input("Enter new password (leave blank to keep current password): ")
-    new_personal_id = input("Enter Personal ID: ")
-    new_tel_no = input("Enter new telephone number: ")
-    new_address = input("Enter new address: ")
-
-    # Hash the new password if it is provided
-    if new_password:
-        hashed_password = hashlib.sha256(new_password.encode()).hexdigest()
-    else:
-        # If the password is not changed, retrieve the current hashed password from the database
-        sql_get_password = "SELECT password FROM users WHERE username = %s"
-        mycursor.execute(sql_get_password, (username,))
-        hashed_password = mycursor.fetchone()[0]
-
-    sql = """
-    UPDATE users 
-    SET username = %s, password = %s, personal_id = %s, tel_no = %s, address = %s
-    WHERE username = %s
-    """
-    val = (new_username, hashed_password, new_personal_id, new_tel_no, new_address, username)
-    mycursor.execute(sql, val)
-    mydb.commit()
-
-    print("Personal details updated successfully.")
-
-def view_rental_history():
-    username = input("Enter your username: ")
-    sql = "SELECT * FROM rentals WHERE customer_username = %s"
-    mycursor.execute(sql, (username,))
-    rentals = mycursor.fetchall()
-    for rental in rentals:
-        print(rental)
-
-def view_details_of_booked_car():
-    username = input("Enter your username: ")
-    sql = """
-    SELECT cars.*
-    FROM rentals
-    JOIN cars ON rentals.car_id = cars.id
-    WHERE rentals.customer_username = %s AND rentals.rental_end >= CURDATE()
-    """
-    mycursor.execute(sql, (username,))
-    cars = mycursor.fetchall()
-    for car in cars:
-        print(car)
-
-def make_car_booking():
-    username = input("Enter your username: ")
-    car_id = int(input("Enter car ID to book: "))
-    rental_start = input("Enter rental start date (YYYY-MM-DD): ")
-    rental_end = input("Enter rental end date (YYYY-MM-DD): ")
-    total_fee = calculate_rental_fee(car_id, rental_start, rental_end)
-    book_car(username, car_id, rental_start, rental_end, total_fee)
-
-def make_payment():
-    username = input("Enter your username: ")
-    # Implement make payment functionality
-    pass
 
 
 def customer_menu():
@@ -81,17 +19,54 @@ def customer_menu():
         option = input("Select an option: ")
 
         if option == '1':
-            modify_personal_details()
+            while True:
+                print("\n** Modify Personal Details **\n")
+                modify_personal_details()
+                confirm = input("Are you sure you want to save the changes? (Y/N): ")
+                if confirm.lower() == 'y':
+                    break
+                else:
+                    reenter = input("Changes not saved. Re-enter the details? (Y/N): ")
+                    if reenter.lower() == 'y':
+                        continue  # This will loop back to re-enter personal details
+                    else:
+                        break
+
         elif option == '2':
+            # View rental history
             view_rental_history()
+
         elif option == '3':
-            view_details_of_booked_car()
+            while True:
+                # View details of booked car
+                username = input("Enter your username: ")
+                view_details_of_booked_car(username)
+                confirm = input("Would you like to view details of another booked car? (Y/N): ")
+                if confirm.lower() == 'n':
+                    break
+
         elif option == '4':
-            make_car_booking()
+            while True:
+                # Make a car booking
+                make_car_booking()
+                confirm = input("Would you like to make another booking? (Y/N): ")
+                if confirm.lower() == 'y':
+                    continue  # This will loop back to make another booking
+                else:
+                    break
+
         elif option == '5':
-            make_payment()
+            while True:
+                # Make payment
+                make_payment()
+                confirm = input("Would you like to make another payment? (Y/N): ")
+                if confirm.lower() == 'n':
+                    break
+
         elif option == '6':
-            break
+            print("Logging out. Goodbye!")
+            break  # Exit the loop and log out
+
         else:
             print("Invalid option, please try again.")
 

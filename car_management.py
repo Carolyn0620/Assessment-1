@@ -1,5 +1,6 @@
 from database import mycursor, mydb
-
+from rental_management import calculate_rental_fee
+from rental_management import book_car
 
 # Function to display cars
 def display_cars():
@@ -28,16 +29,37 @@ def display_cars():
 
 
 # Function to delete car
-def delete_car():
-    display_cars()  # Display the list of cars before asking for the car ID
-    car_id = int(input("\nEnter the car ID to delete: "))
-    confirm = input("Are you sure you want to delete this car? (Y/N): ")
-    if confirm.lower() == 'y':
-        sql = "DELETE FROM cars WHERE id = %s"
-        mycursor.execute(sql, (car_id,))
-        mydb.commit()
-        print("Car deleted successfully.")
-    else:
-        print("Car deletion cancelled.")
+def delete_car(car_id):
+    # Delete the car from the database
+    sql_delete = "DELETE FROM cars WHERE id = %s"
+    mycursor.execute(sql_delete, (car_id,))
+    mydb.commit()
+    print(f"Car with ID {car_id} deleted successfully.")
 
+# Function to view detals of booked car
+def view_details_of_booked_car():
+    username = input("Enter your username: ")
+    sql = """
+    SELECT cars.*
+    FROM rentals
+    JOIN cars ON rentals.car_id = cars.id
+    WHERE rentals.customer_username = %s AND rentals.rental_end >= CURDATE()
+    """
+    mycursor.execute(sql, (username,))
+    cars = mycursor.fetchall()
+    for car in cars:
+        print(car)
 
+# Function to make car booking
+def make_car_booking():
+    username = input("Enter your username: ")
+    car_id = int(input("Enter car ID to book: "))
+    rental_start = input("Enter rental start date (YYYY-MM-DD): ")
+    rental_end = input("Enter rental end date (YYYY-MM-DD): ")
+    total_fee = calculate_rental_fee(car_id, rental_start, rental_end)
+    book_car(username, car_id, rental_start, rental_end, total_fee)
+
+def make_payment():
+    username = input("Enter your username: ")
+    # Implement make payment functionality
+    pass

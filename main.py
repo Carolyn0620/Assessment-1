@@ -1,7 +1,7 @@
 from database import create_database_schema
 from database import mycursor, mydb
 from admin_menu import admin_menu
-from customer_menu import customer_menu
+from customer_menu import customer_menu, modify_personal_details
 from utils import get_valid_input, is_positive_int, is_string
 import hashlib
 
@@ -42,12 +42,12 @@ def login():
     
     if username == DEFAULT_ADMIN_USERNAME and password == DEFAULT_ADMIN_PASSWORD: 
         print("\n** Default Admin Login Successful. **\n")
-        print("1. Existing Admin")
+        print("1. Update Admin Details")
         print("2. New Admin\n")
         admin_choice = input("Select an option: ")
 
         if admin_choice == '1':
-            admin_login()
+            modify_personal_details()
         elif admin_choice == '2':
             register_admin()
         else:
