@@ -1,6 +1,6 @@
 from database import mycursor, mydb
 from car_management import display_cars, delete_car
-from rental_management import update_payment, return_rented_car
+from rental_management import update_payment, return_rented_car, manage_rental_requests, display_rentals
 from utils import get_valid_input, is_positive_int, is_string, is_float
 
 def admin_menu():
@@ -10,9 +10,10 @@ def admin_menu():
         print("2 = Modify Car")
         print("3 = Display Car")
         print("4 = Delete Car")
-        print("5 = Update Customer Payment (Cash/Cheque)")
+        print("5 = Update Customer Payment (Cash/Credit Card)")
         print("6 = Return Rented Car")
-        print("7 = Return to Previous Menu\n")
+        print("7 = Manage Rental Requests")
+        print("8 = Return to Previous Menu\n")
         
         option = input("Select an option: ")
         
@@ -139,17 +140,28 @@ def admin_menu():
         elif option == '3':
             display_cars()
         elif option == '4':
-            delete_car()
             display_cars()
+            try:
+                car_id = int(input("Enter the car ID to delete: "))
+                delete_car(car_id)
+            except ValueError:
+                print("Invalid ID. Please enter a numeric value.")
         elif option == '5':
+            display_rentals()
             rental_id = int(input("Enter rental ID: "))
             amount = float(input("Enter payment amount: "))
-            payment_method = input("Enter payment method (Cash/Cheque): ")
+            payment_method = input("Enter payment method (Cash/Credit Card): ")
             update_payment(rental_id, amount, payment_method)
         elif option == '6':
-            rental_id = int(input("Enter rental ID to return car: "))
-            return_rented_car(rental_id)
+            display_rentals()
+            try:
+                rental_id = int(input("Enter rental ID to return car: "))
+                return_rented_car(rental_id)
+            except ValueError:
+                print("Invalid input. Rental ID must be a number. Please try again.")
         elif option == '7':
+            manage_rental_requests()    
+        elif option == '8':
             break # Exit the loop and return to the previous menu
         else:
             print("Invalid option, please try again.")

@@ -1,9 +1,89 @@
-from database import create_database_schema
-from database import mycursor, mydb
+import hashlib
+from database import create_database_schema, mycursor, mydb
 from admin_menu import admin_menu
 from customer_menu import customer_menu, modify_personal_details
 from utils import get_valid_input, is_positive_int, is_string
-import hashlib
+
+class User:
+    def __init__(self, username, password, role):
+        self.username = username
+        self.password = self.hash_password(password)
+        self.role = role
+
+    @staticmethod
+    def hash_password(password):
+        return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    
+    @staticmethod
+    def check_password(hashed_password, user_password):
+        return hashed_password == hashlib.sha256(user_password.encode('utf-8')).hexdigest()
+
+    def save_to_db(self, name, personal_id, tel_no, address):
+        sql = "INSERT INTO users (name, personal_id, tel_no, address, username, password, role) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+        val = (name, personal_id, tel_no, address, self.username, self.password, self.role)
+        mycursor.execute(sql, val)
+        mydb.commit()
+        print(f"{self.role.capitalize()} registered successfully.")
+
+    @classmethod
+    def login(cls, username, password):
+        hashed_password = cls.hash_password(password)
+        sql = "SELECT * FROM users WHERE username = %s AND password = %s"
+        mycursor.execute(sql, (username, hashed_password))
+        user = mycursor.fetchone()
+        
+        if user:
+            role = user[3]
+            if role == 'admin':
+                print("Admin login successful.")
+                return Admin(username, password)
+            elif role == 'customer':
+                print("Customer login successful.")
+                return Customer(username, password)
+        else:
+            print("Invalid username or password. Please try again.")
+        return None
+
+class Admin(User):
+    DEFAULT_ADMIN_USERNAME = "admin"
+    DEFAULT_ADMIN_PASSWORD = "adminpass"
+    
+    def __init__(self, username, password):
+        super().__init__(username, password, "admin")
+    
+    def admin_menu(self):
+        admin_menu()
+    
+    @staticmethod
+    def register_admin():
+        print("\n** Register New Admin **\n")
+        name = get_valid_input("Enter name: ", is_string)
+        personal_id = get_valid_input("Enter Personal ID: ", is_positive_int)
+        tel_no = get_valid_input("Enter Tel. No: ", is_string)
+        address = get_valid_input("Enter address: ", is_string)
+        username = get_valid_input("Enter username: ", is_string)
+        password = get_valid_input("Enter password: ", is_string)
+        admin = Admin(username, password)
+        admin.save_to_db(name, personal_id, tel_no, address)
+
+class Customer(User):
+    def __init__(self, username, password):
+        super().__init__(username, password, "customer")
+    
+    def customer_menu(self):
+        customer_menu()
+    
+    @staticmethod
+    def register_customer():
+        print("\n** Register New Customer **\n")
+        name = get_valid_input("Enter name: ", is_string)
+        personal_id = get_valid_input("Enter Personal ID: ", is_positive_int)
+        tel_no = get_valid_input("Enter Tel. No: ", is_string)
+        address = get_valid_input("Enter address: ", is_string)
+        username = get_valid_input("Enter username: ", is_string)
+        password = get_valid_input("Enter password: ", is_string)
+        customer = Customer(username, password)
+        customer.save_to_db(name, personal_id, tel_no, address)
 
 def main_menu():
     create_database_schema()
@@ -16,108 +96,28 @@ def main_menu():
         option = input("Select an option: ")
         
         if option == '1':
-            login()
+            username = input("\nEnter username: ")
+            password = input("Enter password: ")
+            user = User.login(username, password)
+            if user:
+                if isinstance(user, Admin):
+                    user.admin_menu()
+                elif isinstance(user, Customer):
+                    user.customer_menu()
         elif option == '2':
-            register()
+            print("\n1. Register as Customer\n2. Register as Admin")
+            reg_option = input("Select an option: ")
+            if reg_option == '1':
+                Customer.register_customer()
+            elif reg_option == '2':
+                Admin.register_admin()
+            else:
+                print("Invalid option.")
         elif option == '3':
             print("Exiting the system. Goodbye!")
             break
         else:
             print("Invalid option, please try again.")
 
-# Default admin credentials
-DEFAULT_ADMIN_USERNAME = "admin"
-DEFAULT_ADMIN_PASSWORD = "adminpass" 
-
-# Function to hash passwords
-def hash_password(password):
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
-
-def check_password(hashed_password, user_password):
-    return hashed_password == hashlib.sha256(user_password.encode('utf-8'))
-
-def login():
-    username = input("\nEnter username: ")
-    password = input("Enter password: ")
-    
-    if username == DEFAULT_ADMIN_USERNAME and password == DEFAULT_ADMIN_PASSWORD: 
-        print("\n** Default Admin Login Successful. **\n")
-        print("1. Update Admin Details")
-        print("2. New Admin\n")
-        admin_choice = input("Select an option: ")
-
-        if admin_choice == '1':
-            modify_personal_details()
-        elif admin_choice == '2':
-            register_admin()
-        else:
-            print("Invalid option, returning to main menu.")
-    else:
-        hashed_password = hash_password(password)
-        sql = "SELECT * FROM users WHERE username = %s AND password = %s"
-        val = (username, hashed_password)
-        mycursor.execute(sql, val)
-        user = mycursor.fetchone()
-        
-        if user:
-            if user[3] == 'admin':  # Role is in the 4th column (index 3) in the users table.
-                print(f"Admin login successful.")
-                admin_menu()
-            elif user[3] == 'customer':
-                print(f"Customer login successful.")
-                customer_menu()
-        else:
-            print("Invalid username or password. Please try again.")
-
-def admin_login():
-    username = input("Enter admin username: ")
-    password = input("Enter admin password: ")
-    hashed_password = hash_password(password)
-    
-    sql = "SELECT * FROM users WHERE username = %s AND password = %s AND role = 'admin'"
-    val = (username, hashed_password)
-    mycursor.execute(sql, val)
-    user = mycursor.fetchone()
-    
-    if user:
-        print(f"Admin login successful. Welcome, {user[1]}!")
-        admin_menu()
-    else:
-        print("Invalid admin credentials. Please try again.")
-
-def register():
-    register_customer()
-
-def register_admin():
-    print("\n** Register New Admin **\n")
-    name = get_valid_input("Enter name: ", is_string)
-    personal_id = get_valid_input("Enter Personal ID: ", is_positive_int)
-    tel_no = get_valid_input("Enter Tel. No: ", is_string)
-    address = get_valid_input("Enter address: ", is_string)
-    username = get_valid_input("Enter username: ", is_string)
-    password = get_valid_input("Enter password: ", is_string)
-    hashed_password = hash_password(password)
-    
-    sql = "INSERT INTO users (name, personal_id, tel_no, address, username, password, role) VALUES (%s, %s, %s, %s, %s, %s, 'admin')"
-    val = (name, personal_id, tel_no, address, username, hashed_password)
-    mycursor.execute(sql, val)
-    mydb.commit()
-    print("New admin registered successfully.")
-
-def register_customer():
-    print("\n** Register New Customer **\n")
-    name = get_valid_input("Enter name: ", is_string)
-    personal_id = get_valid_input("Enter Personal ID: ", is_positive_int)
-    tel_no = get_valid_input("Enter Tel. No: ", is_string)
-    address = get_valid_input("Enter address: ", is_string)
-    username = get_valid_input("Enter username: ", is_string)
-    password = get_valid_input("Enter password: ", is_string)
-    hashed_password = hash_password(password)
-    
-    sql = "INSERT INTO users (name, personal_id, tel_no, address, username, password, role) VALUES (%s, %s, %s, %s, %s, %s, 'customer')"
-    val = (name, personal_id, tel_no, address, username, hashed_password)
-    mycursor.execute(sql, val)
-    mydb.commit()
-    print("New customer registered successfully.")
-
-main_menu()
+if __name__ == "__main__":
+    main_menu()

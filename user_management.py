@@ -19,13 +19,6 @@ def login_user(username, password):
     mycursor.execute(sql, val)
     return mycursor.fetchone()
 
-# Function to log queries
-def log_query(sql, val=None):
-    log_sql = "INSERT INTO query_log (query, query_values) VALUES (%s, %s)"
-    log_val = (sql, str(val) if val else 'NULL')
-    mycursor.execute(log_sql, log_val)
-    mydb.commit()
-
 # Function to modify personal details
 def modify_personal_details():
     while True:
@@ -74,7 +67,7 @@ def modify_personal_details():
             mycursor.execute(sql, val)
             mydb.commit()
 
-            print("✅ Personal details updated successfully.")
+            print("Personal details updated successfully.")
             break
         else:
             reenter = input("Changes not saved. Re-enter the details? (Y/N): ")

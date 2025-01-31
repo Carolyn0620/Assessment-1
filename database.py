@@ -1,5 +1,6 @@
 import mysql.connector
 
+# Establishing MySQL database connection
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
@@ -10,9 +11,11 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 
 def create_database_schema():
+    # Create database and switch to it
     mycursor.execute("CREATE DATABASE IF NOT EXISTS python_crs")
     mycursor.execute("USE python_crs")
     
+    # Create users table
     mycursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -26,6 +29,7 @@ def create_database_schema():
     )
     """)
     
+    # Create cars table
     mycursor.execute("""
     CREATE TABLE IF NOT EXISTS cars (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -44,29 +48,27 @@ def create_database_schema():
     )
     """)
     
-    mycursor.execute("""
-    CREATE TABLE IF NOT EXISTS rentals (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        car_id INT NOT NULL,
-        rental_start DATE NOT NULL,
-        rental_end DATE NOT NULL,
-        total_fee FLOAT NOT NULL,
-        status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (car_id) REFERENCES cars(id)
-    )
-    """)
+# Create rentals table
+mycursor.execute("""
+CREATE TABLE IF NOT EXISTS rentals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    car_id INT NOT NULL,
+    rental_start DATE NOT NULL,
+    rental_end DATE NOT NULL,
+    total_fee FLOAT NOT NULL,
+    booked_by VARCHAR(255) NOT NULL,
+    email_address VARCHAR(255) NOT NULL,
+    payment_status ENUM('paid', 'unpaid') DEFAULT 'unpaid',
+    rental_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    return_status ENUM('returned', 'pending') DEFAULT 'pending',
+    FOREIGN KEY (username) REFERENCES users(username),
+    FOREIGN KEY (car_id) REFERENCES cars(id)
+)
+""")
+
     
-    mycursor.execute("""
-    CREATE TABLE IF NOT EXISTS payments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        rental_id INT NOT NULL,
-        amount FLOAT NOT NULL,
-        payment_method ENUM('Cash', 'Cheque') NOT NULL,
-        payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (rental_id) REFERENCES rentals(id)
-    )
-    """)
-    
-    mydb.commit()
+# Commit changes
+mydb.commit()
+
+
