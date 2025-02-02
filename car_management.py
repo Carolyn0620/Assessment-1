@@ -1,9 +1,13 @@
-
-from database import mycursor, mydb
 from rental_management import calculate_rental_fee
 from rental_management import book_car
 from tabulate import tabulate
 from datetime import datetime
+from database import Database
+
+# Get database instance
+db_instance = Database()
+mydb = db_instance.get_connection()
+mycursor = db_instance.get_cursor()
 
 def display_cars():
     try:

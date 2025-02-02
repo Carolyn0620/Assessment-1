@@ -1,19 +1,20 @@
+from database import Database, create_database_schema
+from customer_menu import customer_menu
+from utils import Validator
 import hashlib
-from database import create_database_schema, mycursor, mydb
-from admin_menu import admin_menu
-from customer_menu import customer_menu, modify_personal_details
-from utils import get_valid_input, is_positive_int, is_string
+from admin_menu import AdminMenu
 
 class User:
-    def __init__(self, username, password, role):
+    def __init__(self, username, password, role, mycursor):
         self.username = username
         self.password = self.hash_password(password)
         self.role = role
+        self.mycursor = mycursor # Save cursor instance here
 
     @staticmethod
     def hash_password(password):
         return hashlib.sha256(password.encode('utf-8')).hexdigest()
-    
+
     @staticmethod
     def check_password(hashed_password, user_password):
         return hashed_password == hashlib.sha256(user_password.encode('utf-8')).hexdigest()
@@ -31,7 +32,7 @@ class User:
         sql = "SELECT * FROM users WHERE username = %s AND password = %s"
         mycursor.execute(sql, (username, hashed_password))
         user = mycursor.fetchone()
-        
+
         if user:
             role = user[3]
             if role == 'admin':
@@ -47,43 +48,61 @@ class User:
 class Admin(User):
     DEFAULT_ADMIN_USERNAME = "admin"
     DEFAULT_ADMIN_PASSWORD = "adminpass"
-    
-    def __init__(self, username, password):
-        super().__init__(username, password, "admin")
-    
+
+    def __init__(self, username, password, mycursor):
+        super().__init__(username, password, mycursor, "admin")
+
     def admin_menu(self):
-        admin_menu()
-    
+        AdminMenu()
+
     @staticmethod
     def register_admin():
         print("\n** Register New Admin **\n")
-        name = get_valid_input("Enter name: ", is_string)
-        personal_id = get_valid_input("Enter Personal ID: ", is_positive_int)
-        tel_no = get_valid_input("Enter Tel. No: ", is_string)
-        address = get_valid_input("Enter address: ", is_string)
-        username = get_valid_input("Enter username: ", is_string)
-        password = get_valid_input("Enter password: ", is_string)
+        name = Validator.get_valid_input("Enter name: ", Validator.is_string)
+        personal_id = Validator.get_valid_input("Enter Personal ID: ", Validator.is_positive_int)
+        tel_no = Validator.get_valid_input("Enter Tel. No: ", Validator.is_string)
+        address = Validator.get_valid_input("Enter address: ", Validator.is_string)
+        username = Validator.get_valid_input("Enter username: ", Validator.is_string)
+        password = Validator.get_valid_input("Enter password: ", Validator.is_string)
         admin = Admin(username, password)
         admin.save_to_db(name, personal_id, tel_no, address)
 
 class Customer(User):
     def __init__(self, username, password):
-        super().__init__(username, password, "customer")
-    
+        super().__init__(username, password, mycursor, "customer")
+
     def customer_menu(self):
         customer_menu()
-    
+
     @staticmethod
     def register_customer():
         print("\n** Register New Customer **\n")
-        name = get_valid_input("Enter name: ", is_string)
-        personal_id = get_valid_input("Enter Personal ID: ", is_positive_int)
-        tel_no = get_valid_input("Enter Tel. No: ", is_string)
-        address = get_valid_input("Enter address: ", is_string)
-        username = get_valid_input("Enter username: ", is_string)
-        password = get_valid_input("Enter password: ", is_string)
+        name = Validator.get_valid_input("Enter name: ", Validator.is_string)
+        personal_id = Validator.get_valid_input("Enter Personal ID: ", Validator.is_positive_int)
+        tel_no = Validator.get_valid_input("Enter Tel. No: ", Validator.is_string)
+        address = Validator.get_valid_input("Enter address: ", Validator.is_string)
+        username = Validator.get_valid_input("Enter username: ", Validator.is_string)
+        password = Validator.get_valid_input("Enter password: ", Validator.is_string)
         customer = Customer(username, password)
         customer.save_to_db(name, personal_id, tel_no, address)
+
+class UserManager:
+    def __init__(self, db_instance):
+        self.db_instance = db_instance
+        self.mydb = self.db_instance.get_connection()
+        self.mycursor = self.db_instance.get_cursor()
+
+    def change_username(self):
+        current_username = Validator.validate_current_username(self.mycursor)
+
+        while True:
+            new_username = input("Enter your new username: ").strip()
+            if Validator.validate_new_username(new_username, self.mycursor):
+                sql_update_username = "UPDATE users SET username = %s WHERE username = %s"
+                self.mycursor.execute(sql_update_username, (new_username, current_username))
+                self.mydb.commit()
+                print(f"Username changed to '{new_username}' successfully.")
+                return new_username
 
 def main_menu():
     create_database_schema()
@@ -94,7 +113,7 @@ def main_menu():
         print("2. Register")
         print("3. Exit\n")
         option = input("Select an option: ")
-        
+
         if option == '1':
             username = input("\nEnter username: ")
             password = input("Enter password: ")
@@ -108,9 +127,9 @@ def main_menu():
             print("\n1. Register as Customer\n2. Register as Admin")
             reg_option = input("Select an option: ")
             if reg_option == '1':
-                Customer.register_customer()
+                Customer.register_customer(mycursor)
             elif reg_option == '2':
-                Admin.register_admin()
+                Admin.register_admin(mycursor)
             else:
                 print("Invalid option.")
         elif option == '3':
@@ -120,4 +139,9 @@ def main_menu():
             print("Invalid option, please try again.")
 
 if __name__ == "__main__":
+    db_instance = Database()
+    mydb = db_instance.get_connection()
+    mycursor = db_instance.get_cursor()
+
+    
     main_menu()

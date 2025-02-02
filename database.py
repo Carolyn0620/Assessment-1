@@ -1,21 +1,37 @@
 import mysql.connector
 
-# Establishing MySQL database connection
-mydb = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Carolyn123",
-    database="python_crs"
-)
+class Database:
+    _instance = None
 
-mycursor = mydb.cursor()
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(Database, cls).__new__(cls)
+            cls._instance.connection = cls._connect()
+        return cls._instance
 
+    @staticmethod
+    def _connect():
+        return mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="Carolyn123",
+            database="python_crs"
+        )
+
+    def get_connection(self):
+        return self._instance.connection
+
+    def get_cursor(self):
+        return self._instance.connection.cursor()
+
+# Function to create tables
 def create_database_schema():
-    # Create database and switch to it
+    db = Database().get_connection()
+    mycursor = db.cursor()
+    
     mycursor.execute("CREATE DATABASE IF NOT EXISTS python_crs")
     mycursor.execute("USE python_crs")
     
-    # Create users table
     mycursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,8 +44,7 @@ def create_database_schema():
         role VARCHAR(255) NOT NULL
     )
     """)
-    
-    # Create cars table
+
     mycursor.execute("""
     CREATE TABLE IF NOT EXISTS cars (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -47,28 +62,23 @@ def create_database_schema():
         max_rent_period INT NOT NULL
     )
     """)
-    
-# Create rentals table
-mycursor.execute("""
-CREATE TABLE IF NOT EXISTS rentals (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    car_id INT NOT NULL,
-    rental_start DATE NOT NULL,
-    rental_end DATE NOT NULL,
-    total_fee FLOAT NOT NULL,
-    booked_by VARCHAR(255) NOT NULL,
-    email_address VARCHAR(255) NOT NULL,
-    payment_status ENUM('paid', 'unpaid') DEFAULT 'unpaid',
-    rental_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    return_status ENUM('returned', 'pending') DEFAULT 'pending',
-    FOREIGN KEY (username) REFERENCES users(username),
-    FOREIGN KEY (car_id) REFERENCES cars(id)
-)
-""")
 
-    
-# Commit changes
-mydb.commit()
+    mycursor.execute("""
+    CREATE TABLE IF NOT EXISTS rentals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(255) NOT NULL,
+        car_id INT NOT NULL,
+        rental_start DATE NOT NULL,
+        rental_end DATE NOT NULL,
+        total_fee FLOAT NOT NULL,
+        booked_by VARCHAR(255) NOT NULL,
+        email_address VARCHAR(255) NOT NULL,
+        payment_status ENUM('paid', 'unpaid') DEFAULT 'unpaid',
+        rental_status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+        return_status ENUM('returned', 'pending') DEFAULT 'pending',
+        FOREIGN KEY (username) REFERENCES users(username),
+        FOREIGN KEY (car_id) REFERENCES cars(id)
+    )
+    """)
 
-
+    db.commit()

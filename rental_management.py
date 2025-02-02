@@ -1,6 +1,11 @@
 from datetime import datetime
 import mysql
-from database import mycursor, mydb
+from database import Database
+
+# Get database instance
+db_instance = Database()
+mydb = db_instance.get_connection()
+mycursor = db_instance.get_cursor()
 
 # Function to update customer payment
 def update_payment(rental_id, amount, payment_method):
