@@ -32,6 +32,7 @@ class Validator:
             sql_check_username = "SELECT COUNT(*) FROM users WHERE username = %s"
             mycursor.execute(sql_check_username, (username,))
             result = mycursor.fetchone()
+            mycursor.fetchall()
             count = result[0] if result else 0  # Ensure count is valid
 
             if count > 0:

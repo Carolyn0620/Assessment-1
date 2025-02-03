@@ -2,11 +2,35 @@ from car_management import display_cars, delete_car
 from rental_management import update_payment, return_rented_car, manage_rental_requests, display_rentals
 from utils import Validator
 from database import Database
+from user_menu import User
 
 # Get database instance
 db_instance = Database()
 mydb = db_instance.get_connection()
 mycursor = db_instance.get_cursor()
+
+class Admin(User):
+    def __init__(self, username, password, mycursor, mydb):
+        super().__init__(username, password, "admin", mycursor, mydb)
+        self.mydb = mydb
+        self.mycursor = mycursor
+
+    def admin_menu(self):
+        while True:
+            print("\n** Default Admin Menu **\n")
+            print("1. Modify Admin Details")
+            print("2. Register New Admin")
+            print("3. Main Menu")
+            option = input("Select an option: ")
+
+            if option == '1':
+                self.modify_admin_details()
+            elif option == '2':
+                self.register_new_admin()
+            elif option == '3':
+                break  # Return to the previous menu
+            else:
+                print("Invalid option, please try again.")
 
 class AdminMenu:
     def __init__(self):
