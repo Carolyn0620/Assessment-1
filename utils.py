@@ -1,4 +1,5 @@
-from database import Database
+import sqlite3
+from db_config import connect_to_db
 
 class Validator:
 
@@ -15,7 +16,7 @@ class Validator:
             if validation_func(value):
                 return value
             else:
-                print("❌ Invalid input, please try again.")
+                print("Invalid input, please try again.")
 
     def is_positive_int(value):
         return value.isdigit() and int(value) > 0
@@ -25,14 +26,14 @@ class Validator:
 
 
     @staticmethod
-    def validate_current_username(mycursor):
-        while True:  
+    def validate_current_username(cursor):
+        while True: 
             username = input("Enter your current username: ").strip()
 
             sql_check_username = "SELECT COUNT(*) FROM users WHERE username = %s"
-            mycursor.execute(sql_check_username, (username,))
-            result = mycursor.fetchone()
-            mycursor.fetchall()
+            cursor.execute(sql_check_username, (username,))
+            result = cursor.fetchone()
+            cursor.fetchall()
             count = result[0] if result else 0  # Ensure count is valid
 
             if count > 0:
@@ -41,8 +42,26 @@ class Validator:
             else:
                 print("Error: Current username not found. Please try again.\n")
 
+    def validate_username(username):
+        # Check if the new username is at least 3 characters long
+        if len(username) < 3:
+            print("Username must be at least 3 characters long. Please try again.")
+            return False
+        
+        if not username.isalnum():
+            print("Error: Username must be alphanumeric.")
+            return False
+        return True
+
+
     @staticmethod
-    def validate_new_username(username, mycursor):
+    def validate_new_username(username, cursor):
+
+        connection = connect_to_db()
+        cursor = connection.cursor()
+        
+        connection.close()
+
         # Check if the new username is at least 3 characters long
         if len(username) < 3:
             print("Username must be at least 3 characters long. Please try again.")
@@ -50,12 +69,12 @@ class Validator:
 
         # Check if the new username already exists in the database
         try:
-            sql_check_username = "SELECT username FROM users WHERE username = %s"
-            mycursor.execute(sql_check_username, (username,))
-            existing_username = mycursor.fetchone()
+            sql_check_username = "SELECT username FROM users WHERE username = ?"
+            cursor.execute(sql_check_username, (username,))
+            existing_username = cursor.fetchone()
 
             if existing_username is not None:
-                print("New username already taken. Please try again.")
+                print("Username already taken. Please try again.")
                 return False
 
             # If username is valid and not taken, return True
@@ -64,6 +83,7 @@ class Validator:
         except Exception as e:
             print(f"Error while checking username: {e}")
             return False
+
 
     @staticmethod
     def validate_password(password):

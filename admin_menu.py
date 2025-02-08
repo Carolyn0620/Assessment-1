@@ -1,15 +1,13 @@
 from car_management import display_cars, delete_car
 from rental_management import update_payment, return_rented_car, manage_rental_requests, display_rentals
 from utils import Validator
-from database import Database
-from user_menu import User
+from db_config import connect_to_db
 
-# Get database instance
-db_instance = Database()
-mydb = db_instance.get_connection()
-mycursor = db_instance.get_cursor()
+# Initialize database connection and cursor
+connection = connect_to_db()
+cursor = connection.cursor()
 
-class Admin(User):
+class Admin():
     def __init__(self, username, password, mycursor, mydb):
         super().__init__(username, password, "admin", mycursor, mydb)
         self.mydb = mydb
@@ -91,8 +89,8 @@ class AdminMenu:
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             val = (make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period)
-            mycursor.execute(sql, val)
-            mydb.commit()
+            cursor.execute(sql, val)
+            connection.commit()
             print("Car added successfully.")
             break
     
@@ -120,8 +118,8 @@ class AdminMenu:
         max_rent_period=%s WHERE id=%s
         """
         val = (make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period, car_id)
-        mycursor.execute(sql, val)
-        mydb.commit()
+        cursor.execute(sql, val)
+        connection.commit()
         print("Car details updated successfully.")
     
     def delete_car(self):
@@ -146,4 +144,3 @@ class AdminMenu:
             return_rented_car(rental_id)
         except ValueError:
             print("Invalid input. Rental ID must be a number. Please try again.")
-

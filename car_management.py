@@ -2,18 +2,17 @@ from rental_management import calculate_rental_fee
 from rental_management import book_car
 from tabulate import tabulate
 from datetime import datetime
-from database import Database
+from db_config import connect_to_db
 
 # Get database instance
-db_instance = Database()
-mydb = db_instance.get_connection()
-mycursor = db_instance.get_cursor()
+connection = connect_to_db()
+cursor = connection.cursor()
 
 def display_cars():
     try:
         sql = "SELECT * FROM cars"
-        mycursor.execute(sql)
-        cars = mycursor.fetchall()
+        cursor.execute(sql)
+        cars = cursor.fetchall()
 
         # Check if any cars are fetched
         if not cars:
@@ -37,8 +36,8 @@ def delete_car(car_id):
     try:
         # Delete the car from the database
         sql_delete = "DELETE FROM cars WHERE id = %s"
-        mycursor.execute(sql_delete, (car_id,))
-        mydb.commit()
+        cursor.execute(sql_delete, (car_id,))
+        connection.commit()
         print(f"Car with ID {car_id} deleted successfully.")
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -56,8 +55,8 @@ def view_details_of_booked_car():
     JOIN cars ON rentals.car_id = cars.id
     WHERE rentals.username = %s AND rentals.rental_end >= CURDATE()
     """
-    mycursor.execute(sql, (username,))
-    cars = mycursor.fetchall()
+    cursor.execute(sql, (username,))
+    cars = cursor.fetchall()
 
     if cars:
         print("\n========== Details of Booked Cars ==========")

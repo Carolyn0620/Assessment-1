@@ -1,38 +1,37 @@
 from datetime import datetime
-import mysql
-from database import Database
+import mysql.connector
+from db_config import connect_to_db
 
 # Get database instance
-db_instance = Database()
-mydb = db_instance.get_connection()
-mycursor = db_instance.get_cursor()
+connection = connect_to_db()
+cursor = connection.cursor()
 
 # Function to update customer payment
 def update_payment(rental_id, amount, payment_method):
     sql = "INSERT INTO payments (rental_id, amount, payment_method) VALUES (%s, %s, %s)"
     val = (rental_id, amount, payment_method)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    cursor.execute(sql, val)
+    connection.commit()
     print("Payment updated successfully.")
 
 # Function to return a rented car
 def return_rented_car(rental_id):
-    sql = "DELETE FROM rentals WHERE id = %s"
-    mycursor.execute(sql, (rental_id,))
-    mydb.commit()
+    sql = "UPDATE rentals SET return_status = 'returned' WHERE id = %s"
+    cursor.execute(sql, (rental_id,))
+    connection.commit()
     print("Car returned successfully.")
 
 # Function to calculate rental fee
 def calculate_rental_fee(car_id, rental_start, rental_end):
-    sql = "SELECT * FROM cars WHERE id = %s"
-    mycursor.execute(sql, (car_id,))
-    car = mycursor.fetchone()
+    sql = "SELECT rate_per_day FROM cars WHERE id = %s"
+    cursor.execute(sql, (car_id,))
+    car = cursor.fetchone()
     
     start_date = datetime.strptime(rental_start, "%Y-%m-%d")
     end_date = datetime.strptime(rental_end, "%Y-%m-%d")
     rental_days = (end_date - start_date).days + 1  # Include the last day
     
-    daily_rate = car[7]  # Assuming rate_per_day is the 8th column (index 7) of the cars table
+    daily_rate = car[0]  # Assuming rate_per_day is the first column
     total_fee = rental_days * daily_rate
     
     print(f"Total rental fee for {rental_days} days is: {total_fee}")
@@ -41,9 +40,9 @@ def calculate_rental_fee(car_id, rental_start, rental_end):
 # Function to view rental history
 def view_rental_history():
     username = input("Enter your username: ")
-    sql = "SELECT * FROM rentals WHERE username = %s"
-    mycursor.execute(sql, (username,))
-    rentals = mycursor.fetchall()
+    sql = "SELECT * FROM rentals WHERE username = ?"
+    cursor.execute(sql, (username,))
+    rentals = cursor.fetchall()
 
     if not rentals:
         print("No rental history found for the given username.")
@@ -60,9 +59,8 @@ def view_rental_history():
         print(f"Booked By: {rental[6]}")
         print(f"Email Address: {rental[7]}")
         print(f"Payment Status: {rental[8]}")
-        print(f"Rental Status: {rental[8]}")
-        print(f"Return Status: {rental[8]}")
-
+        print(f"Rental Status: {rental[9]}")
+        print(f"Return Status: {rental[10]}")
 
 def book_car(username, car_id, rental_start, rental_end, total_fee, booked_by, email_address, payment_status, rental_status, return_status):
     sql = """
@@ -70,8 +68,8 @@ def book_car(username, car_id, rental_start, rental_end, total_fee, booked_by, e
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     val = (username, car_id, rental_start, rental_end, total_fee, booked_by, email_address, payment_status, rental_status, return_status)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    cursor.execute(sql, val)
+    connection.commit()
 
 def view_rental_requests():
     sql = """
@@ -81,15 +79,15 @@ def view_rental_requests():
     JOIN cars ON rentals.car_id = cars.id
     WHERE rentals.rental_status = 'pending'
     """
-    mycursor.execute(sql)
-    requests = mycursor.fetchall()
+    cursor.execute(sql)
+    requests = cursor.fetchall()
 
     if requests:
         print("\n========== Pending Rental Requests ==========")
-        print(f"{'Request ID':<10}{'Customer':<20}{'Car':<20}{'Rental Start':<15}{'Rental End':<15}{'Total Fee':<10}{'Payment Status':<10}{'Rental Status':<10}{'Return Status':<10}")
+        print(f"{'Request ID':<10}{'Customer':<20}{'Car':<20}{'Rental Start':<15}{'Rental End':<15}{'Total Fee':<10}{'Rental Status':<15}")
         print("=" * 100)
         for request in requests:
-            print(f"{request[0]:<10}{request[1]:<20}{request[2] + ' ' + request[3]:<20}{str(request[4]):<15}{str(request[5]):<15}{request[6]:<10}{request[7]:<10}")
+            print(f"{request[0]:<10}{request[1]:<20}{request[2] + ' ' + request[3]:<20}{str(request[4]):<15}{str(request[5]):<15}{request[6]:<10}{request[7]:<15}")
         print("=" * 100)
     else:
         print("No pending rental requests found.")
@@ -113,8 +111,8 @@ def manage_rental_requests():
 def update_status(request_id, rental_status):
     sql = "UPDATE rentals SET rental_status = %s WHERE id = %s"
     val = (rental_status, request_id)
-    mycursor.execute(sql, val)
-    mydb.commit()
+    cursor.execute(sql, val)
+    connection.commit()
     print(f"Request ID {request_id} has been {rental_status}.")
 
 def display_rentals():
@@ -122,8 +120,8 @@ def display_rentals():
     SELECT rentals.id, rentals.username, rentals.car_id, rentals.rental_start, rentals.rental_end, rentals.total_fee, rentals.booked_by, rentals.email_address, rentals.payment_status, rentals.rental_status, rentals.return_status
     FROM rentals
     """
-    mycursor.execute(sql)
-    rentals = mycursor.fetchall()
+    cursor.execute(sql)
+    rentals = cursor.fetchall()
 
     if rentals:
         print("\n========== Rentals Table ==========")
@@ -140,13 +138,13 @@ def update_payment(rental_id, amount, payment_method):
         # Insert payment details into the payments table
         sql_payment = "INSERT INTO payments (rental_id, amount, payment_method) VALUES (%s, %s, %s)"
         val_payment = (rental_id, amount, payment_method)
-        mycursor.execute(sql_payment, val_payment)
+        cursor.execute(sql_payment, val_payment)
         
         # Update the payment_status in the rentals table
         sql_update_status = "UPDATE rentals SET payment_status = 'paid' WHERE id = %s"
-        mycursor.execute(sql_update_status, (rental_id,))
+        cursor.execute(sql_update_status, (rental_id,))
         
-        mydb.commit()
+        connection.commit()
         print("Payment recorded and status updated to 'paid' successfully.")
     except mysql.connector.Error as err:
         print(f"Error: {err}")
@@ -156,9 +154,11 @@ def return_rented_car(rental_id):
         confirm = input(f"You entered '{rental_id}'. Please make sure the information is correct. Proceed? (Y/N): ")
         if confirm.lower() == 'y':
             sql = "UPDATE rentals SET return_status = 'returned' WHERE id = %s"
-            mycursor.execute(sql, (rental_id,))
-            mydb.commit()
+            cursor.execute(sql, (rental_id,))
+            connection.commit()
             print("Rental return status updated to 'returned' successfully.")
     except mysql.connector.Error as err:
         print(f"Error: {err}")
+
+
 
