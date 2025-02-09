@@ -1,12 +1,20 @@
 import sqlite3
-
+import os
 
 def create_tables():
-    # Connect to SQLite database (creates `crs_data.db` if it doesn't exist)
-    connection = sqlite3.connect("crs_data.db")
+    # Connect to SQLite database (creates `car_rental.db` if it doesn't exist)
+    db_path = "your_database.db"
+    
+    # Ensure the correct database file is being used
+    if os.path.exists(db_path):
+        print(f"Database file '{db_path}' exists.")
+    else:
+        print(f"Database file '{db_path}' does not exist. It will be created.")
+    
+    connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
 
-     # Create a table for storing user's details
+    # Create a table for storing user's details
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,10 +65,11 @@ def create_tables():
     );
     ''')
 
+
     # Call these methods to create sample databases of users, cars and bookings for testing purpose
-    # initial_user_DB(cursor)
+    # initial_user_db(cursor)
     # initial_car_db(cursor)
-    # initial_booking_db(cursor)
+    # initial_rental_db(cursor)
 
     # Commit and close connection
     connection.commit()
@@ -85,34 +94,54 @@ def insert_initial_users(cursor):
                           VALUES (%s, %s, %s, %s, %s, %s, %s)''', user)
     print("Initial user data inserted successfully")
 
-
 def initial_car_db(cursor):
     # Insert data into cars table (Initial data for testing purposes)
     cars = [
-        ('Toyota', 'Camry', 'ABC123', 'Red', 5, 10.0, 60.0, 2020, 15000, 1, 1, 30),
-        ('Honda', 'Civic', 'DEF456', 'Blue', 5, 9.0, 55.0, 2019, 20000, 1, 1, 30),
-        ('Ford', 'Mustang', 'GHI789', 'Black', 4, 15.0, 90.0, 2021, 5000, 1, 1, 30)
+        ('Proton', 'Saga', 2019, 49000, True, 1, 7),
+        ('Proton', 'Wira', 2020, 90000, True, 1, 7),
+        ('Proton', 'Mewa', 2018, 5000, True, 1, 7),
+        ('Perodua', 'Alza', 2022, 65000, True, 1, 7),
+        ('Perodua', 'Myvi', 2023, 32000, True, 1, 7),
+        ('Perodua', 'Myci', 2024, 4000, True, 1, 7)
     ]
 
     for car in cars:
-        cursor.execute('''INSERT INTO cars (make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', car)
+        cursor.execute('''INSERT INTO cars (make, model, year, mileage, available, min_rent_period, max_rent_period)
+                                  VALUES (?, ?, ?, ?, ?, ?, ?)''', car)
 
 
 def initial_rental_db(cursor):
-    # Insert data into rentals table (Initial data for testing purposes)
-    rentals = [
-        ('john_doe', 1, '2023-06-01', '2023-06-05', 300.0, 'John Doe', 'john@example.com', 'confirmed', 'returned'),
-        ('jane_smith', 2, '2023-07-10', '2023-07-15', 275.0, 'Jane Smith', 'jane@example.com', 'confirmed', 'pending'),
-        ('bob_jones', 3, '2023-08-20', '2023-08-25', 450.0, 'Bob Jones', 'bob@example.com', 'confirmed', 'returned')
+    # Insert data into bookings table (Initial data for testing purposes)
+    bookings = [
+        (9, 15, '2025-02-01', '2025-02-05', 200, 'pending'),
+        (10, 23, '2025-01-31', '2025-02-04', 200, 'pending'),
+        (11, 24, '2025-02-05', '2025-02-07', 100, 'pending'),
     ]
 
-    for rental in rentals:
+    for booking in bookings:
         cursor.execute('''INSERT INTO bookings (user_id, car_id, start_date, end_date, total_cost, status) 
-                                    VALUES (?, ?, ?, ?, ?, ?)''', rental)
+                                    VALUES (?, ?, ?, ?, ?, ?)''', booking)
 
 
 # Run the script to create tables
 if __name__ == "__main__":
-    create_tables()
+    db_path = "car_rental.db"
+
+ # Ensure the database exists and tables are created
+    if not os.path.exists(db_path):
+        print(f"Database file '{db_path}' does not exist. It will be created.")
+        create_tables()
+    
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    
+    # Insert initial data
+    insert_initial_users(cursor)
+    initial_car_db(cursor)
+    initial_rental_db(cursor)
+    
+    # Commit and close the connection
+    connection.commit()
+    connection.close()
+
+    print("Database setup complete with sample data!")

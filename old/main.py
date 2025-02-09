@@ -1,11 +1,10 @@
 import car_management
 import rental_management
 import user_management
-import db_setup
 from utils import Validator
 from database import Database
-from functools import partial
 from user import User
+import db_setup
 
 def prompt_user_to_login():
     print("\n** Login to your account. **\n")
@@ -21,45 +20,99 @@ def prompt_user_to_login():
     user = user_management.get_user_from_db(username, password)
 
     if user:
-        print(f"Login successful, Welcome!\n")
+        print(f"Login successful, Welcome!")
         return user
     else:
         print("Login failed. Please check your username and password.")
         return None
-
-def prompt_user_to_register(is_admin=False):
+    
+def prompt_user_to_register(role='customer'):
     print("\n** New Registration **\n")
-    db = Database()
-    connection = db.connect_to_db()
-    cursor = connection.cursor()
-
     name = Validator.get_valid_input("Enter name: ", Validator.is_string)
     personal_id = Validator.get_valid_input("Enter Personal ID: ", Validator.is_positive_int)
     tel_no = Validator.get_valid_input("Enter Tel. No: ", Validator.validate_tel_no)
     address = Validator.get_valid_input("Enter address: ", Validator.validate_address)
 
-    validate_username_func = partial(Validator.validate_new_username, cursor=cursor)
-
     while True:
-        username = Validator.get_valid_input("Enter username: ", validate_username_func)
+        username = Validator.get_valid_input("Enter username: ", Validator.validate_username)
         password = Validator.get_valid_input("Enter password: ", Validator.validate_password)
-
-        # Set role based on is_admin flag
-        role = 'admin' if is_admin else 'customer'
+        role = 'customer'  # Default role is customer
 
         user = user_management.add_user_to_db(name, personal_id, tel_no, address, username, password, role)
 
         if user is True:
-            print(f"{'Admin' if is_admin else 'Customer'} registration successful.")
-            connection.close()
-            return prompt_default_admin_funtion()
+            print("Registration successful.")
+            return main_menu()
+        else:
+            print(user)  
+
+def prompt_admin_to_register(role='admin'):
+    print("\n** Admin New Registration **\n")
+    name = Validator.get_valid_input("Enter name: ", Validator.is_string)
+    personal_id = Validator.get_valid_input("Enter Personal ID: ", Validator.is_positive_int)
+    tel_no = Validator.get_valid_input("Enter Tel. No: ", Validator.validate_tel_no)
+    address = Validator.get_valid_input("Enter address: ", Validator.validate_address)
+
+    while True:
+        username = Validator.get_valid_input("Enter username: ", Validator.validate_username)
+        password = Validator.get_valid_input("Enter password: ", Validator.validate_password)
+        role = 'admin'  # Default role is admin
+
+        user = user_management.add_user_to_db(name, personal_id, tel_no, address, username, password, role)
+
+        if user is True:
+            print("Registration successful.")
+            return main_menu()
         else:
             print(user)
+ 
+import hashlib
+import sqlite3
 
-def validate_role(user):
+# Hashing function
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# Database connection
+def connect_to_db():
+    return sqlite3.connect('your_database.db')
+
+# Functions to prompt user actions based on role
+def prompt_customer_function(user):
+    # Customer-specific functionality
+    print(f"Welcome, {user[1]}! You are logged in as a customer.")
+
+def prompt_admin_function(user):
+    # Admin-specific functionality
+    print(f"Welcome, {user[1]}! You are logged in as an admin.")
+
+
+def validate_role(username, password):
+    connection = connect_to_db()
+    cursor = connection.cursor()
+
+    # Hash the password
+    hashed_password = User.hash_password(password)
+    print("Hashed password:", hashed_password)  # Debug: print hashed password
+
+    # Ensure correct values are being passed
+    print("Username:", username)  # Debug: print username
+    print("Password:", password)  # Debug: print plain-text password
+
+    sql = "SELECT * FROM users WHERE username = ? AND password = ?"
+    print("Executing SQL query:", sql)
+    print("With parameters:", (username, hashed_password))
+
+    cursor.execute(sql, (username, hashed_password))
+    user = cursor.fetchone()
+    print("SQL query executed.")  # Debug: indicate query execution
+
+    connection.close()
+    print("Connection closed.")  # Debug: indicate connection closed
 
     if user:
-        role = user.role  # Access the role attribute directly
+        print("User data:", user)  # Debug: print the user data
+        role = user[8]  # Adjust the index based on your table structure
         if role == 'customer':
             prompt_customer_function(user)
             print("Customer login successful.")
@@ -68,6 +121,34 @@ def validate_role(user):
             print("Admin login successful.")
     else:
         print("Invalid username or password.")
+
+
+
+# def validate_role(username, password):
+#     connection = connect_to_db()
+#     cursor = connection.cursor()
+
+#     # Call the static method to hash the password
+#     hashed_password = User.hash_password(password)  
+
+#     sql = "SELECT * FROM users WHERE username = ? AND password = ?"
+#     cursor.execute(sql, (username, hashed_password))
+#     user = cursor.fetchone()
+
+#     connection.close()
+
+#     if user:
+#         print("User data:", user)  # Debug: print the user data
+#         role = user[8]  # Adjust the index based on your table structure
+#         if role == 'customer':
+#             prompt_customer_function()
+#             print("Customer login successful.")
+#         elif role == 'admin':
+#             prompt_admin_function()
+#             print("Admin login successful.")
+#     else:
+#         print("Invalid username or password.")
+
 
 def main_menu():
     db_setup.create_tables()
@@ -83,16 +164,33 @@ def main_menu():
         if option == '1':
             user = prompt_user_to_login()
             if user:
-                validate_role(user)
+                validate_role(user.username, user.password)
         elif option == '2':
             user = prompt_user_to_register()
             if user:
-                validate_role(user.username, user.password)
+                validate_role(user.username, user.passworder)
         elif option == '3':
             print("Exiting the system. Goodbye!")
             break
         else:
             print("Invalid option, please try again.")
+
+def prompt_admin_function(user_id):
+    # Prompt admin to select a function
+    print("Please select a function: \n(1) Rental Management \n(2) Car Management\n")
+    choice = input("Number: ")
+
+    if choice == "1":
+        prompt_admin_rental_management(user_id)
+        prompt_admin_function(user_id)
+        return
+    elif choice == "2":
+        prompt_admin_car_management(user_id)
+        prompt_admin_function(user_id)
+        return
+    else:
+        print("Invalid selection. Please enter '1' or '2'.")
+        prompt_admin_function(user_id)  # Prompt the user again"""
 
 def prompt_default_admin_funtion():
     
@@ -112,28 +210,15 @@ def prompt_default_admin_funtion():
                 print("\n** Update Admin Details **\n")
                 user_management.modify_personal_details()
             elif option == '2':
-                prompt_user_to_register(is_admin=True)
+                register_new_admin()
             elif option == '3':
                 break  # Return to the previous menu
             else:
                 print("Invalid option, please try again.")
 
-def prompt_admin_function(user_id):
-    # Prompt admin to select a function
-    print("Please select a function: \n(1) Rental Management \n(2) Car Management\n")
-    choice = input("Number: ")
+def register_new_admin():
+    prompt_admin_to_register(role='admin')
 
-    if choice == "1":
-        prompt_admin_rental_management(user_id)
-        prompt_admin_function(user_id)
-        return
-    elif choice == "2":
-        prompt_admin_car_management(user_id)
-        prompt_admin_function(user_id)
-        return
-    else:
-        print("Invalid selection. Please enter '1' or '2'.")
-        prompt_admin_function(user_id)  # Prompt the user again"""
 
 def prompt_admin_rental_management(user_id):
     # Prompt admin to select a function from rental management
@@ -230,67 +315,29 @@ def update_booking_status():
 
 
 def prompt_customer_function(user):
-    while True:
-        print("\n** Customer Menu **\n")
-        print("1 = View Available Car")
-        print("2 = View rental history")
-        print("3 = Make a car booking")
-        print("4 = Logout\n")
+    print("Please choose an option: \n(1) View Available Cars \n(2) Book Car\n")
+    choice = input("Number: ")
 
-        option = input("Select an option: ")
+    if choice == "1":
+        car_list = view_available_car()
 
-        if option == "1":
-            car_list = view_available_car()
-            if car_list:
-                prompt_customer_function(user)
-
-        elif option == '2':
-            view_rental_history()
-
-        elif option == '3':
-            car_management.make_car_booking()
+        if car_list:
             prompt_customer_function(user)
 
-        elif option == '4':
-            print("Logging out. Goodbye!")
-            break  # Exit the loop and log out
+    elif choice == "2":
+        prompt_book_car(user.get_user_id())
+        prompt_customer_function(user)
 
-        else:
-            print("Invalid option, please try again.")
+    else:
+        print("Invalid selection. Please enter '1' or '2'.")
+        prompt_customer_function(user)  # Prompt the user again
 
 
 def view_available_car():
     car_list = car_management.view_available_cars()
     return car_list
 
-def view_rental_history():
-    db = Database()
-    connection = db.connect_to_db()
-    cursor = connection.cursor()
 
-    username = input("Enter your username: ")
-    sql = "SELECT * FROM rentals WHERE username = ?"
-    cursor.execute(sql, (username,))
-    rentals = cursor.fetchall()
-
-    if not rentals:
-        print("No rental history found for the given username.")
-        return
-
-    for rental in rentals:
-        print("\nRental Details:")
-        print(f"Rental ID: {rental[0]}")
-        print(f"Username: {rental[1]}")
-        print(f"Car ID: {rental[2]}")
-        print(f"Rental Start Date: {rental[3]}")
-        print(f"Rental End Date: {rental[4]}")
-        print(f"Total Fee: {rental[5]}")
-        print(f"Booked By: {rental[6]}")
-        print(f"Email Address: {rental[7]}")
-        print(f"Payment Status: {rental[8]}")
-        print(f"Rental Status: {rental[8]}")
-        print(f"Return Status: {rental[8]}")
-   
 def prompt_book_car(user_id):
     # Prompt customer to book car
     print("Please enter your information below:")

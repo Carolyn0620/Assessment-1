@@ -1,16 +1,14 @@
-from rental_management import calculate_rental_fee, book_car
-from datetime import datetime
-from database import Database
+from rental_management import calculate_rental_fee
+from rental_management import book_car
 from tabulate import tabulate
-
+from datetime import datetime
+from db_config import connect_to_db
 
 # Get database instance
-db = Database()
-connection = db.connect_to_db()
+connection = connect_to_db()
 cursor = connection.cursor()
 
-
-def view_available_cars():
+def display_cars():
     try:
         sql = "SELECT * FROM cars"
         cursor.execute(sql)

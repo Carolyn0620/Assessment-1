@@ -1,20 +1,16 @@
-from database import Database
 from datetime import datetime
-import sqlite3
+import mysql.connector
+from db_config import connect_to_db
 
-db = Database()
-connection = db.connect_to_db()
+# Get database instance
+connection = connect_to_db()
 cursor = connection.cursor()
 
 # Function to update customer payment
 def update_payment(rental_id, amount, payment_method):
-    sql = "INSERT INTO payments (rental_id, amount, payment_method) VALUES (?, ?, ?)"
+    sql = "INSERT INTO payments (rental_id, amount, payment_method) VALUES (%s, %s, %s)"
     val = (rental_id, amount, payment_method)
     cursor.execute(sql, val)
-    
-    # Update payment status
-    sql_update_status = "UPDATE rentals SET payment_status = 'paid' WHERE id = ?"
-    cursor.execute(sql_update_status, (rental_id,))
     connection.commit()
     print("Payment updated successfully.")
 
@@ -150,18 +146,18 @@ def update_payment(rental_id, amount, payment_method):
         
         connection.commit()
         print("Payment recorded and status updated to 'paid' successfully.")
-    except sqlite3.connector.Error as err:
+    except mysql.connector.Error as err:
         print(f"Error: {err}")
 
 def return_rented_car(rental_id):
     try:
         confirm = input(f"You entered '{rental_id}'. Please make sure the information is correct. Proceed? (Y/N): ")
         if confirm.lower() == 'y':
-            sql = "UPDATE rentals SET return_status = 'returned' WHERE id = ?"
+            sql = "UPDATE rentals SET return_status = 'returned' WHERE id = %s"
             cursor.execute(sql, (rental_id,))
             connection.commit()
             print("Rental return status updated to 'returned' successfully.")
-    except sql.connector.Error as err:
+    except mysql.connector.Error as err:
         print(f"Error: {err}")
 
 
