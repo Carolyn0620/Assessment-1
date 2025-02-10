@@ -57,11 +57,10 @@ class Validator:
     @staticmethod
     def validate_new_username(username, cursor):
         
-        db = Database
+        db = Database()
         connection = db.connect_to_db()
         cursor = connection.cursor()
         
-        connection.close()
 
         # Check if the new username is at least 3 characters long
         if len(username) < 3:
@@ -84,7 +83,8 @@ class Validator:
         except Exception as e:
             print(f"Error while checking username: {e}")
             return False
-
+        finally:
+            connection.close()
 
     @staticmethod
     def validate_password(password):

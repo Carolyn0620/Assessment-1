@@ -52,7 +52,7 @@ def prompt_user_to_register(is_admin=False):
         if user is True:
             print(f"{'Admin' if is_admin else 'Customer'} registration successful.")
             connection.close()
-            return prompt_default_admin_funtion()
+            return main_menu()
         else:
             print(user)
 
