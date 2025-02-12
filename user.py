@@ -9,11 +9,10 @@ class User:
         self.address = address
         self.username = username
         self.password = password  # Store the hashed password
-        self.hashed_password = self.hash_password(password)  # Store the hashed password
         self.role = role
 
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
     def verify_password(self, password):
-        return self.hashed_password == hashlib.sha256(password.encode()).hexdigest()
+        return self.password == hashlib.sha256(password.encode()).hexdigest()

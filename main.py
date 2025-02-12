@@ -6,6 +6,8 @@ from utils import Validator
 from database import Database
 from functools import partial
 from user import User
+from datetime import datetime
+
 
 def prompt_user_to_login():
     print("\n** Login to your account. **\n")
@@ -120,36 +122,47 @@ def prompt_default_admin_funtion():
 
 def prompt_admin_function(user_id):
     # Prompt admin to select a function
-    print("Please select a function: \n(1) Rental Management \n(2) Car Management\n")
-    choice = input("Number: ")
+    print("\n** Admin Menu **\n")
+    print("1. Rental Management")
+    print("2. Car Management")
+    print("3. Return to Previous Menu")
+    option = input("Select an option: ")
 
-    if choice == "1":
+    if option == "1":
         prompt_admin_rental_management(user_id)
         prompt_admin_function(user_id)
         return
-    elif choice == "2":
+    elif option == "2":
         prompt_admin_car_management(user_id)
         prompt_admin_function(user_id)
         return
+    elif option == '3':
+        main_menu()
     else:
-        print("Invalid selection. Please enter '1' or '2'.")
-        prompt_admin_function(user_id)  # Prompt the user again"""
+        print("Invalid option, please try again.")
 
 def prompt_admin_rental_management(user_id):
     # Prompt admin to select a function from rental management
-    print("Please select a function: \n(1) View Pending Booking \n(2) Update Booking Status "
-          "\n(3) Back to Admin Function Menu")
-    choice = input("Number: ")
+    print("\n** Rental Management **\n")
+    print("1. Update Customer Payment")
+    print("2. Return Rented Car")
+    print("3. Manage Rental Requests")
+    print("4. Return to Previous Menu\n")
+    option = input("Select an option: ")
 
-    if choice == "1":
-        view_pending_bookings()
-        prompt_admin_function(user_id)
+    if option == "1":
+        prompt_update_payment_status()
+        prompt_admin_rental_management(user_id)
         return
-    elif choice == "2":
-        update_booking_status()
-        prompt_admin_function(user_id)
+    elif option == "2":
+        prompt_return_rented_car()
+        prompt_admin_rental_management(user_id)
         return
-    elif choice == "3":
+    elif option == "3":
+        prompt_manage_rental_requests()
+        prompt_admin_rental_management(user_id)
+        return
+    elif option == "4":
         prompt_admin_function(user_id)
         return
     else:
@@ -157,44 +170,58 @@ def prompt_admin_rental_management(user_id):
         prompt_admin_rental_management(user_id)  # Prompt the user again"""
 
 
-def prompt_add_car_details(valid):
-    # Prompt admin to add new cars
-    print("Please enter car's detail:")
-    make = input("Make: ")
-    model = input("Model: ")
-    year = input("Year: ")
-    mileage = input("Mileage: ")
-    min_rent_period = 1
-    max_rent_period = 7
+def prompt_update_payment_status():
+    rental_management.display_rentals_table()
+    # Prompt admin to update payment status
+    id = input("Enter the rental ID: ")
+    payment_status = input("Enter payment status (Paid, Unpaid): ")
 
-    valid = car_management.add_car_to_db(make, model, year, mileage, min_rent_period, max_rent_period)
+    rental_management.update_payment_status_to_db(id, payment_status)
+
+def prompt_update_car_details():
+    car_management.view_available_cars()
+    car_id = input("Enter the car ID: ")
+    mileage = input("Enter car mileage: ")
+    available_now = input("Is the car available now? (Y = Yes, N = No): ")
+    car_management.update_car_to_db(car_id, mileage, available_now)
+
+def prompt_add_car_details(valid):
+    car_management.view_available_cars()
+    print("\n** Add Car Data Entry **\n")
+    make = Validator.get_valid_input("Enter car make: ", Validator.is_string)
+    model = Validator.get_valid_input("Enter car model: ", Validator.is_string)
+    plate_number = input("Enter car plate number: ")
+    color = Validator.get_valid_input("Enter car colour: ", Validator.is_string)
+    seats = int(Validator.get_valid_input("Enter number of seats: ", Validator.is_positive_int))
+    rate_per_hour = float(Validator.get_valid_input("Enter rate per hour: ", Validator.is_float))
+    rate_per_day = float(Validator.get_valid_input("Enter rate per day: ", Validator.is_float))
+    year = int(Validator.get_valid_input("Enter car year: ", Validator.is_positive_int))
+    mileage = int(Validator.get_valid_input("Enter car mileage: ", Validator.is_positive_int))
+    available_now = Validator.get_valid_input("Is the car available now? (Y = Yes, N = No): ", lambda x: x.lower() in ['y', 'n']).lower()
+    min_rent_period = int(Validator.get_valid_input("Enter minimum rent period (day): ", Validator.is_positive_int))
+    max_rent_period = int(Validator.get_valid_input("Enter maximum rent period (day): ", Validator.is_positive_int))
+                
+    valid = car_management.add_car_to_db(make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period)
     return valid
 
-
 def prompt_delete_car_details():
+    car_management.view_available_cars()
     # Prompt admin to delete car
-    print("Please enter car's ID:")
-    car_id = input("Car's ID: ")
+    car_id = input("Enter Car's ID to delete: ")
     print(car_management.delete_car_from_db(car_id))
     return None
 
-
-def prompt_update_car_details():
-    # Prompt admin to add new cars
-    print("Please enter car's ID:")
-    car_id = input("Car's ID: ")
-    mileage = input("Mileage: ")
-    availability = input("Availability: ")
-    print(car_management.update_car_to_db(car_id, mileage, availability))
-
-
 def prompt_admin_car_management(user_id):
-    # Prompt admin to select a function from car management
-    print("Please select a function: \n(1) Add Car \n(2) Delete A Car \n(3) Update Car Mileage "
-          "\n(4) Back to Admin Function Menu")
-    choice = input("Number: ")
+# Prompt admin to select a function from car management
+    print("\n** Car Management **\n")
+    print("1 = Add Car")
+    print("2 = Delete Car")
+    print("3 = Update Car")
+    print("4 = Return to Previous Menu\n")
+            
+    option = input("Select an option: ")
 
-    if choice == "1":
+    if option == "1":
         valid = True
         validity = prompt_add_car_details(valid)
         if validity:
@@ -202,31 +229,55 @@ def prompt_admin_car_management(user_id):
         else:
             prompt_admin_car_management(user_id)
         return
-    elif choice == "2":
+    elif option == "2":
         prompt_delete_car_details()
         prompt_admin_function(user_id)
         return
-    elif choice == "3":
+    elif option == "3":
         prompt_update_car_details()
         prompt_admin_function(user_id)
         return
-    elif choice == "4":
+    elif option == "4":
         prompt_admin_function(user_id)
         return
     else:
         print("Invalid selection. Please enter '1' or '2' or '3' or '4'.")
         prompt_admin_car_management(user_id)  # Prompt the user again"""
 
+def prompt_manage_rental_requests():
+    while True:
+        rental_management.view_rentals_requests()
+        request_id = input("Enter the Request ID to approve/reject (or 'Q' to quit): ")
+        
+        if request_id.strip().lower() == 'q':
+            break
+
+        action = input("Enter 'A' to approve or 'R' to reject the request: ").strip().lower()
+        if action == 'a':
+            rental_management.update_rental_status(request_id, 'approved')
+        elif action == 'r':
+            rental_management.update_rental_status(request_id, 'rejected')
+        else:
+            print("Invalid action. Please enter 'A' to approve or 'R' to reject.")
 
 def view_pending_bookings():
     rental_management.get_all_pending_bookings()
 
 
-def update_booking_status():
-    booking_id = input("Please enter Booking ID:")
-    status = input("Please enter Booking Status: ")
-
-    rental_management.update_booking_status(booking_id, status.strip().lower())
+def prompt_return_rented_car():
+    rental_management.display_rentals_table()
+    car_id = input("Enter the Returned car ID: ")
+    while True:
+        return_status = input("Has the car been returned? (Y/N): ").lower()
+        if return_status in ['y', 'n']:
+            break
+        print("Invalid input. Please enter 'Y' for Yes or 'N' for No.")
+    
+    # Update the return status in the rentals table based on the input
+    if return_status == 'y':
+        rental_management.update_returned_car_to_db(car_id, "returned")
+    else:
+        rental_management.update_returned_car_to_db(car_id, "pending")
 
 
 def prompt_customer_function(user):
@@ -240,7 +291,7 @@ def prompt_customer_function(user):
         option = input("Select an option: ")
 
         if option == "1":
-            car_list = view_available_car()
+            car_list = car_management.view_available_cars()
             if car_list:
                 prompt_customer_function(user)
 
@@ -248,7 +299,7 @@ def prompt_customer_function(user):
             view_rental_history()
 
         elif option == '3':
-            car_management.make_car_booking()
+            prompt_book_car()
             prompt_customer_function(user)
 
         elif option == '4':
@@ -258,10 +309,6 @@ def prompt_customer_function(user):
         else:
             print("Invalid option, please try again.")
 
-
-def view_available_car():
-    car_list = car_management.view_available_cars()
-    return car_list
 
 def view_rental_history():
     db = Database()
@@ -287,19 +334,60 @@ def view_rental_history():
         print(f"Total Fee: {rental[5]}")
         print(f"Booked By: {rental[6]}")
         print(f"Email Address: {rental[7]}")
-        print(f"Payment Status: {rental[8]}")
+        print(f"Payment Status: {rental[10]}")
         print(f"Rental Status: {rental[8]}")
-        print(f"Return Status: {rental[8]}")
+        print(f"Return Status: {rental[9]}")
    
-def prompt_book_car(user_id):
+def prompt_book_car():
     # Prompt customer to book car
-    print("Please enter your information below:")
-    car_id = input("Car ID: ")
-    start_date = input("Start Date(YYYY-MM-DD): ")
-    end_date = input("End Date (YYYY-MM-DD): ")
-    daily_rate = input("Daily Rate: ")
-    booking_detail = rental_management.book_car(user_id, car_id, start_date, end_date, daily_rate, "pending")
-    return booking_detail
+    while True:
+        username = input("Enter your username: ")
+        if username.strip():  # Check if the input is not empty
+            break
+        print("Invalid input. Please enter a valid username.")
+    
+    # Validate car ID
+    while True:
+        try:
+            car_id = int(input("Enter car ID to book: "))
+            break
+        except ValueError:
+            print("Invalid input. Car ID must be a number. Please try again.")
+
+    # Validate rental start date
+    while True:
+        rental_start = input("Enter rental start date (YYYY-MM-DD): ")
+        try:
+            datetime.strptime(rental_start, "%Y-%m-%d")
+            break
+        except ValueError:
+            print("Invalid date format. Please enter the date in YYYY-MM-DD format.")
+
+    # Validate rental end date
+    while True:
+        rental_end = input("Enter rental end date (YYYY-MM-DD): ")
+        try:
+            datetime.strptime(rental_end, "%Y-%m-%d")
+            break
+        except ValueError:
+            print("Invalid date format. Please enter the date in YYYY-MM-DD format.")
+
+    # Validate booked by
+    while True:
+        booked_by = input("Enter the name of the person booking the car: ")
+        if booked_by.strip():  # Check if the input is not empty
+            break
+        print("Invalid input. Please enter a valid name.")
+
+    # Validate email address
+    while True:
+        email_address = input("Enter email address: ")
+        if email_address.strip():  # Check if the input is not empty
+            break
+        print("Invalid input. Please enter a valid email address.")
+
+    total_fee = rental_management.calculate_rental_fee(car_id, rental_start, rental_end)
+    rental_management.book_car(username, car_id, rental_start, rental_end, total_fee, booked_by, email_address)
 
 if __name__ == "__main__":
     main_menu()

@@ -1,16 +1,37 @@
 from rental_management import calculate_rental_fee, book_car
-from datetime import datetime
 from database import Database
 from tabulate import tabulate
+from utils import Validator
 
 
-# Get database instance
-db = Database()
-connection = db.connect_to_db()
-cursor = connection.cursor()
 
+def add_car_to_db(make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period):
+    # Add a new car to the database.
+    db = Database()
+    connection = db.connect_to_db()
+    cursor = connection.cursor()
+
+    try:
+        sql = ("INSERT INTO cars (make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period) "
+               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        values = (make, model, plate_number, color, seats, rate_per_hour, rate_per_day, year, mileage, available_now, min_rent_period, max_rent_period)
+
+        cursor.execute(sql, values)
+        connection.commit()
+        print("Car added successfully!")
+
+    except Exception as e:
+        return f"Error: {e}"
+    finally:
+        cursor.close()
+        connection.close()
 
 def view_available_cars():
+    
+    db = Database()
+    connection = db.connect_to_db()
+    cursor = connection.cursor()
+
     try:
         sql = "SELECT * FROM cars"
         cursor.execute(sql)
@@ -26,23 +47,44 @@ def view_available_cars():
         table = []
         for car in cars:
             table.append([
-                car[0], car[1], car[2], car[3], car[4], car[5], car[6], car[7], car[8], car[9], "Yes" if car[10] else "No", car[11], car[12]
+                car[0], car[1], car[2], car[3], car[4], car[5], car[6], car[7], car[8], car[9], car[10], car[11], car[12]
             ])
         print(tabulate(table, headers, tablefmt="grid"))
     except Exception as e:
         print(f"An error occurred: {e}")
-
+    finally:
+        cursor.close()
+        connection.close()
 
 # Function to delete car
-def delete_car(car_id):
-    try:
-        # Delete the car from the database
-        sql_delete = "DELETE FROM cars WHERE id = %s"
-        cursor.execute(sql_delete, (car_id,))
-        connection.commit()
-        print(f"Car with ID {car_id} deleted successfully.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+def delete_car_from_db(car_id):
+
+    db = Database()
+    connection = db.connect_to_db()
+    cursor = connection.cursor()
+
+    # Delete the car from the database
+    sql_delete = "DELETE FROM cars WHERE id = ?"
+    cursor.execute(sql_delete, (car_id,))
+    connection.commit()
+    print(f"Car with ID {car_id} deleted successfully.")
+
+def update_car_to_db(car_id, mileage, available_now):
+    db = Database()
+    connection = db.connect_to_db()
+    cursor = connection.cursor()
+        
+    sql = """
+    UPDATE cars SET mileage=?, available_now=? WHERE id=?
+    """
+    val = (mileage, available_now, car_id)
+    cursor.execute(sql, val)
+    connection.commit()
+    print("Car details updated successfully.")
+
+    cursor.close()
+    connection.close()
+    view_available_cars()
 
 def view_details_of_booked_car():
     while True:
@@ -78,67 +120,6 @@ def view_details_of_booked_car():
 
 
 # Function to make car booking
-def make_car_booking():
-    # Validate username
-    while True:
-        username = input("Enter your username: ")
-        if username.strip():  # Check if the input is not empty
-            confirm = input("Please make sure the information is correct. Proceed? (Y/N): ")
-            if confirm.lower() == 'y':
-                break
-        print("Invalid input. Please enter a valid username.")
-    
-    # Validate car ID
-    while True:
-        try:
-            car_id = int(input("Enter car ID to book: "))
-            confirm = input("Please make sure the information is correct. Proceed? (Y/N): ")
-            if confirm.lower() == 'y':
-                break
-        except ValueError:
-            print("Invalid input. Car ID must be a number. Please try again.")
 
-    # Validate rental start date
-    while True:
-        rental_start = input("Enter rental start date (YYYY-MM-DD): ")
-        try:
-            datetime.strptime(rental_start, "%Y-%m-%d")
-            confirm = input("Please make sure the information is correct. Proceed? (Y/N): ")
-            if confirm.lower() == 'y':
-                break
-        except ValueError:
-            print("Invalid date format. Please enter the date in YYYY-MM-DD format.")
-
-    # Validate rental end date
-    while True:
-        rental_end = input("Enter rental end date (YYYY-MM-DD): ")
-        try:
-            datetime.strptime(rental_end, "%Y-%m-%d")
-            confirm = input("Please make sure the information is correct. Proceed? (Y/N): ")
-            if confirm.lower() == 'y':
-                break
-        except ValueError:
-            print("Invalid date format. Please enter the date in YYYY-MM-DD format.")
-
-    # Validate booked by
-    while True:
-        booked_by = input("Enter the name of the person booking the car: ")
-        if booked_by.strip():  # Check if the input is not empty
-            confirm = input("Please make sure the information is correct. Proceed? (Y/N): ")
-            if confirm.lower() == 'y':
-                break
-        print("Invalid input. Please enter a valid name.")
-
-    # Validate email address
-    while True:
-        email_address = input("Enter email address: ")
-        if email_address.strip():  # Check if the input is not empty
-            confirm = input("Please make sure the information is correct. Proceed? (Y/N): ")
-            if confirm.lower() == 'y':
-                break
-        print("Invalid input. Please enter a valid email address.")
-
-    total_fee = calculate_rental_fee(car_id, rental_start, rental_end)
-    book_car(username, car_id, rental_start, rental_end, total_fee, booked_by, email_address)
 
 

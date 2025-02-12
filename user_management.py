@@ -38,20 +38,19 @@ def get_user_from_db(username, password):
     sql = "SELECT id, name, personal_id, tel_no, address, username, password, role FROM users WHERE username = ?"
     cursor.execute(sql, (username,))
     user_data = cursor.fetchone()
-
+          
     connection.close()
 
     if user_data:
         # Destructure the data and pass the hashed password
         user_id, name, personal_id, tel_no, address, username, hashed_password, role = user_data
         user = User(name, personal_id, tel_no, address, username, hashed_password, role, user_id)
-        
+
         if user.verify_password(password):
             return user  # Return a User object instead of a tuple
         else:
             return None  # Invalid password
     return None  # User not found
-
 
 def validate_username(name):
     if not name.isalnum():

@@ -33,7 +33,7 @@ def create_tables():
             rate_per_day FLOAT NOT NULL,
             year INT NOT NULL,
             mileage INT NOT NULL,
-            available_now TINYINT(1) NOT NULL,
+            available_now VARCHAR(255) NOT NULL,
             min_rent_period INT NOT NULL,
             max_rent_period INT NOT NULL
         );
@@ -50,6 +50,7 @@ def create_tables():
             total_fee FLOAT NOT NULL,
             booked_by VARCHAR(255) NOT NULL,
             email_address VARCHAR(255) NOT NULL,
+            payment_status VARCHAR(255) NOT NULL,
             rental_status VARCHAR(255) NOT NULL,
             return_status VARCHAR(255) NOT NULL,
             FOREIGN KEY (username) REFERENCES users(username),
