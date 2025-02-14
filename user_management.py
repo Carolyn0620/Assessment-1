@@ -58,5 +58,38 @@ def validate_username(name):
         return False
     return True
 
+def update_personal_details():
+        
+    db = Database()
+    connection = db.connect_to_db()
+    cursor = connection.cursor()
+  
+    while True:
+        current_username = Validator.validate_current_username(cursor)
 
+        new_name = Validator.get_valid_input("Enter your new name: ", Validator.is_string)
+        new_username = Validator.get_valid_input("Enter new username: ", lambda value: Validator.validate_new_username(value, cursor))
+        new_password = Validator.get_valid_input("Enter new password: ", Validator.validate_password)
+        new_personal_id = input("Enter Personal ID: ")
+        new_tel_no = Validator.get_valid_input("Enter new telephone number: ", Validator.validate_tel_no)
+        new_address = Validator.get_valid_input("Enter new address: ", Validator.validate_address)
+        new_role = Validator.get_valid_input("Enter new role: ", Validator.is_string)
 
+        confirm = input("Are you sure these details correct? (Y/N): ")
+        if confirm.lower() == 'y':
+            user = User(new_name, new_personal_id, new_tel_no, new_address, new_username, new_password, new_role)
+            hashed_password = user.hash_password(new_password)
+
+            sql = """
+            UPDATE users 
+            SET name = ?, username = ?, password = ?, personal_id = ?, tel_no = ?, address = ?
+            WHERE username = ?
+            """
+            val = (new_name, new_username, hashed_password, new_personal_id, new_tel_no, new_address, current_username)
+            cursor.execute(sql, val)
+            connection.commit()
+
+            print("Personal details updated successfully.")
+            break
+        else:
+            break

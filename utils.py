@@ -30,7 +30,7 @@ class Validator:
         while True: 
             username = input("Enter your current username: ").strip()
 
-            sql_check_username = "SELECT COUNT(*) FROM users WHERE username = %s"
+            sql_check_username = "SELECT COUNT(*) FROM users WHERE username = ?"
             cursor.execute(sql_check_username, (username,))
             result = cursor.fetchone()
             cursor.fetchall()

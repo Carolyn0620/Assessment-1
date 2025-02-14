@@ -41,15 +41,21 @@ def update_rental_status(request_id, rental_status):
     cursor.execute(sql, val)
     connection.commit()
     print(f"Request ID {request_id} has been {rental_status}.")
-
+    display_rentals_table()
+    
 # Function to update customer payment
 def update_payment_status_to_db(id, payment_status):
+    
+    if payment_status not in ['paid', 'unpaid']:
+        print("Error: Invalid payment status. Must be 'paid' or 'unpaid'.")
+        return
+    
     db = Database()
     connection = db.connect_to_db()
     cursor = connection.cursor()
         
     sql = """
-    UPDATE rentals SET payment_status=? WHERE rental_id=?
+    UPDATE rentals SET payment_status=? WHERE id=?
     """
     val = (payment_status, id)
     cursor.execute(sql, val)
@@ -78,6 +84,7 @@ def update_returned_car_to_db(car_id, return_status):
     finally:
         cursor.close()
         connection.close()
+        display_rentals_table()
 
 # Function to view rental history
 def view_rental_history():

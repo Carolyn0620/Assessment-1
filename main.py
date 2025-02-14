@@ -18,7 +18,7 @@ def prompt_user_to_login():
     default_admin_password = "adminpass"
     if username == default_admin_username and password == default_admin_password:
         print("Default admin login successful.")
-        return prompt_default_admin_funtion()
+        return prompt_default_admin_function()
     
     user = user_management.get_user_from_db(username, password)
 
@@ -96,12 +96,12 @@ def main_menu():
         else:
             print("Invalid option, please try again.")
 
-def prompt_default_admin_funtion():
+def prompt_default_admin_function():
     
-    def __init__(self, username, password, mycursor, mydb):
-        super().__init__(username, password, "admin", mycursor, mydb)
-        self.mydb = mydb
-        self.mycursor = mycursor
+    # def __init__(self, username, password, mycursor, mydb):
+    #     super().__init__(username, password, "admin", mycursor, mydb)
+    #     self.mydb = mydb
+    #     self.mycursor = mycursor
             
     while True:
             print("\n** Default Admin Menu **\n")
@@ -112,7 +112,7 @@ def prompt_default_admin_funtion():
 
             if option == '1':
                 print("\n** Update Admin Details **\n")
-                user_management.modify_personal_details()
+                user_management.update_personal_details()
             elif option == '2':
                 prompt_user_to_register(is_admin=True)
             elif option == '3':
@@ -174,9 +174,42 @@ def prompt_update_payment_status():
     rental_management.display_rentals_table()
     # Prompt admin to update payment status
     id = input("Enter the rental ID: ")
-    payment_status = input("Enter payment status (Paid, Unpaid): ")
+    payment_status = input("Enter payment status (paid, unpaid): ")
 
     rental_management.update_payment_status_to_db(id, payment_status)
+
+
+def prompt_return_rented_car():
+    rental_management.display_rentals_table()
+    car_id = input("Enter the Returned car ID: ")
+    while True:
+        return_status = input("Has the car been returned? (Y/N): ").lower()
+        if return_status in ['y', 'n']:
+            break
+        print("Invalid input. Please enter 'Y' for Yes or 'N' for No.")
+    
+    # Update the return status in the rentals table based on the input
+    if return_status == 'y':
+        rental_management.update_returned_car_to_db(car_id, "returned")
+    else:
+        rental_management.update_returned_car_to_db(car_id, "pending")
+
+
+def prompt_manage_rental_requests():
+    while True:
+        rental_management.view_rentals_requests()
+        request_id = input("Enter the Request ID to approve/reject (or 'Q' to quit): ")
+        
+        if request_id.strip().lower() == 'q':
+            break
+
+        action = input("Enter 'A' to approve or 'R' to reject the request: ").strip().lower()
+        if action == 'a':
+            rental_management.update_rental_status(request_id, 'approved')
+        elif action == 'r':
+            rental_management.update_rental_status(request_id, 'rejected')
+        else:
+            print("Invalid action. Please enter 'A' to approve or 'R' to reject.")
 
 def prompt_update_car_details():
     car_management.view_available_cars()
@@ -244,40 +277,13 @@ def prompt_admin_car_management(user_id):
         print("Invalid selection. Please enter '1' or '2' or '3' or '4'.")
         prompt_admin_car_management(user_id)  # Prompt the user again"""
 
-def prompt_manage_rental_requests():
-    while True:
-        rental_management.view_rentals_requests()
-        request_id = input("Enter the Request ID to approve/reject (or 'Q' to quit): ")
-        
-        if request_id.strip().lower() == 'q':
-            break
 
-        action = input("Enter 'A' to approve or 'R' to reject the request: ").strip().lower()
-        if action == 'a':
-            rental_management.update_rental_status(request_id, 'approved')
-        elif action == 'r':
-            rental_management.update_rental_status(request_id, 'rejected')
-        else:
-            print("Invalid action. Please enter 'A' to approve or 'R' to reject.")
 
 def view_pending_bookings():
     rental_management.get_all_pending_bookings()
 
 
-def prompt_return_rented_car():
-    rental_management.display_rentals_table()
-    car_id = input("Enter the Returned car ID: ")
-    while True:
-        return_status = input("Has the car been returned? (Y/N): ").lower()
-        if return_status in ['y', 'n']:
-            break
-        print("Invalid input. Please enter 'Y' for Yes or 'N' for No.")
-    
-    # Update the return status in the rentals table based on the input
-    if return_status == 'y':
-        rental_management.update_returned_car_to_db(car_id, "returned")
-    else:
-        rental_management.update_returned_car_to_db(car_id, "pending")
+
 
 
 def prompt_customer_function(user):
