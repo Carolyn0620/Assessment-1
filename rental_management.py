@@ -155,7 +155,6 @@ def book_car(username, car_id, rental_start, rental_end, total_fee, booked_by, e
 
 def manage_rental_requests():
     while True:
-        view_rental_requests()
         request_id = input("Enter the Request ID to approve/reject (or 'Q' to quit): ")
         
         if request_id.strip().lower() == 'q':
