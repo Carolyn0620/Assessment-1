@@ -23,7 +23,7 @@ def view_rentals_requests():
     requests = cursor.fetchall()
 
     if requests:
-        print("\n========== Pending Rental Requests ==========")
+        print("\n========== Pending Rental Requests =====================================================================================")
         print(f"{'Request ID':<10}{'Customer':<20}{'Car':<20}{'Rental Start':<15}{'Rental End':<15}{'Total Fee':<10}{'Rental Status':<15}")
         print("=" * 100)
         for request in requests:
@@ -68,15 +68,15 @@ def update_payment_status_to_db(id, payment_status):
 
 
 # Function to return a rented car
-def update_returned_car_to_db(car_id, return_status):
+def update_returned_car_to_db(rental_id, return_status):
     db = Database()
     connection = db.connect_to_db()
     cursor = connection.cursor()
         
     try:
         # Update return_status in the rentals table
-        sql_update_status = "UPDATE rentals SET return_status = ? WHERE car_id = ?"
-        cursor.execute(sql_update_status, (return_status, car_id))
+        sql_update_status = "UPDATE rentals SET return_status = ? WHERE id = ?"
+        cursor.execute(sql_update_status, (return_status, rental_id))
         connection.commit()
         print("Return status updated successfully.")
     except sqlite3.Error as e:
@@ -191,11 +191,11 @@ def display_rentals_table():
             return
   
         print("\n** Rentals Table **")
-        headers = ["Rental ID", "Username", "Car ID", "Rental Start", "Rental End", "Total Fee", "Booked By", "Email Address", "Rental Status", "Return Status",  "Payment Status"]
+        headers = ["Rental ID", "Username", "Car ID", "Rental Start", "Rental End", "Total Fee", "Booked By", "Email Address", "Payment Status", "Return Status",  "Rental Status"]
         table = []
         for rental in rentals:
             table.append([
-                rental[0], rental[1], rental[2], str(rental[3]), str(rental[4]), rental[5], rental[6], rental[7], rental[8], rental[9], rental[10]
+                rental[0], rental[1], rental[2], str(rental[3]), str(rental[4]), rental[5], rental[6], rental[7], rental[10], rental[9], rental[8]
             ])
             print(tabulate(table, headers, tablefmt="fancy_grid"))
     except Exception as e:

@@ -92,7 +92,6 @@ def main_menu():
                 validate_role(user.username, user.password)
         elif option == '3':
             print("Exiting the system. Goodbye!")
-            break
         else:
             print("Invalid option, please try again.")
 
@@ -181,7 +180,7 @@ def prompt_update_payment_status():
 
 def prompt_return_rented_car():
     rental_management.display_rentals_table()
-    car_id = input("Enter the Returned car ID: ")
+    rental_id = input("Enter the Returned Rental ID: ")
     while True:
         return_status = input("Has the car been returned? (Y/N): ").lower()
         if return_status in ['y', 'n']:
@@ -190,9 +189,9 @@ def prompt_return_rented_car():
     
     # Update the return status in the rentals table based on the input
     if return_status == 'y':
-        rental_management.update_returned_car_to_db(car_id, "returned")
+        rental_management.update_returned_car_to_db(rental_id, "returned")
     else:
-        rental_management.update_returned_car_to_db(car_id, "pending")
+        rental_management.update_returned_car_to_db(rental_id, "pending")
 
 
 def prompt_manage_rental_requests():
