@@ -10,7 +10,7 @@ class User:
         self.username = username
         self.password = password  # Store the hashed password
         self.role = role
-
+    
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
